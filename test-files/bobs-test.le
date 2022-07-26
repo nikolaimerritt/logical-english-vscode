@@ -1,7 +1,17 @@
 :- module('tax121+https://www.law.cornell.edu/uscode/text/26/121',[]).
 
 en("the target language is: prolog. 
-    
+%type checking: on
+the type hierarchy is:
+a person
+    a taxpayer
+    a spouse   
+
+a sale or exchange
+    a sale
+    an exchange
+
+
 the templates are:
     
 gross income of *a taxpayer* excludes gain from *an exchange* of *a property* at *a date*.

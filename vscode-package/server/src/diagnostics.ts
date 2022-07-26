@@ -49,14 +49,14 @@ export function textDocumentDiagnostics(document: TextDocument): Diagnostic[] {
 
 
 export function debugOnStart() {
-	const template = Template.fromString(new TypeTree(), '*a person* wants to see *a thing* at *a location*');
-	[
-		'fred bloggs',
-		'fred bloggs want',
-		'fred bloggs wants to see at',
-		'fred bloggs wants to see the eiffel tower at',
-		'fred bloggs wants to see the eiffel tower at home'
-	].forEach(lit => console.log(template.parseElements(lit)));
+	// const template = Template.fromString(new TypeTree(), '*a person* wants to see *a thing* at *a location*');
+	// [
+	// 	'fred bloggs',
+	// 	'fred bloggs want',
+	// 	'fred bloggs wants to see at',
+	// 	'fred bloggs wants to see the eiffel tower at',
+	// 	'fred bloggs wants to see the eiffel tower at home'
+	// ].forEach(lit => console.log(template.parseElements(lit)));
 }
 
 
@@ -101,7 +101,9 @@ function typeMismatchDiags(text: string, typeTree: TypeTree): Diagnostic[] {
 		const terms = termsInClause(templates, clause);
 		for (let i = 0; i < terms.length; i++) {
 			for (let j = i + 1; j < terms.length; j++) {
-				if (terms[i].content.name === terms[j].content.name && terms[i].content.type !== terms[j].content.type) {
+				if (terms[i].content.name === terms[j].content.name 
+						&& !TypeTree.areCompatibleTypes(terms[i].content.type, terms[j].content.type)) {
+					
 					const message = `Type mismatch: '${terms[i].content.type.name}' versus '${terms[j].content.type.name}'`;
 					for (const range of [terms[i].range, terms[j].range]) {
 						if (!diagnostics.some(diag => diag.range === range)) {
@@ -117,6 +119,8 @@ function typeMismatchDiags(text: string, typeTree: TypeTree): Diagnostic[] {
 		}
 	}
 
+	console.log('Type tree:');
+	console.log(typeTree.toString());
 	return diagnostics;
 }
 

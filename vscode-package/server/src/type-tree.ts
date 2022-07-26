@@ -4,7 +4,7 @@ import { Type } from './element';
 
 export class TypeTree {
 	private readonly root: Type;
-	private static readonly rootTypeName = 'thing';
+	private static readonly rootTypeName = 'a thing';
 
 
 	constructor(root: Type = new Type(TypeTree.rootTypeName)) {
@@ -14,7 +14,7 @@ export class TypeTree {
 
 	// creates if does not exist
 	public getType(name: string): Type { 
-		const type = TypeTree.find(this.root, t => t.name === name);
+		const type = find(this.root, t => t.name === name);
 		if (type !== undefined)
 			return type;
 		
@@ -35,20 +35,33 @@ export class TypeTree {
 	public addTypesFromTemplate(template: Template) {
 		const types = template.types();
 		for (const type of types) {
-			if (TypeTree.find(this.root, t => t.name === type.name) === undefined)
+			if (find(this.root, t => t.name === type.name) === undefined)
 				this.root.makeSubtype(type);
 		}
 	}
 
 
-	public areCompatibleTypes(type: Type, otherType: Type): boolean {
-		return TypeTree.isSubtype(type, otherType) || TypeTree.isSubtype(otherType, type);
+	public static areCompatibleTypes(type: Type, otherType: Type): boolean {
+		return isSubtype(type, otherType) || isSubtype(otherType, type);
 	}
 
 
 	public static fromHierarchy(hierarchy: string[]): TypeTree {
 		const tree = new TypeTree();
-		TypeTree.populateFromHierarchy(tree.root, hierarchy);
+		hierarchy = hierarchy.filter(line => line.trim().length > 0);
+		
+		for (let i = 0; i < hierarchy.length; i++) {
+			if (hierarchy[i][0] !== ' ') {
+				const parent = new Type(hierarchy[i].trim());
+				if (i + 1 < hierarchy.length && hierarchy[i + 1][0] === ' ') {
+					const subtypeLines = subtypeSection(hierarchy.slice(i, undefined));
+					this.populateFromHierarchy(parent, subtypeLines);
+				}
+				
+				tree.root.makeSubtype(parent);
+			}
+		}
+
 		return tree;
 	}
 
@@ -70,12 +83,6 @@ export class TypeTree {
 		}
 	}
 
-
-	private static isSubtype(superType: Type, subtype: Type): boolean {
-		return TypeTree.find(superType, t => t.name === subtype.name) !== undefined;
-	}
-
-
 	private buildStringRepresentation(repr: string, start = this.root, depth = 0): string {
 		const indent = '    ';
 		repr += indent.repeat(depth) + start.name + '\n';
@@ -84,19 +91,24 @@ export class TypeTree {
 		
 		return repr;
 	}
+}
 
 
-	private static find(start: Type, predicate: (type: Type) => boolean): Type | undefined {
-		if (predicate(start))
-			return start;
-		
-		for (const subtype of start.subtypes) {
-			if (TypeTree.find(subtype, predicate) !== undefined)
-				return subtype;
-		}
+function isSubtype(superType: Type, subtype: Type): boolean {
+	return find(superType, t => t.name === subtype.name) !== undefined;
+}
 
-		return undefined;
+
+function find(start: Type, predicate: (type: Type) => boolean): Type | undefined {
+	if (predicate(start))
+		return start;
+	
+	for (const subtype of start.subtypes) {
+		if (find(subtype, predicate) !== undefined)
+			return subtype;
 	}
+
+	return undefined;
 }
 
 
@@ -106,7 +118,7 @@ function subtypeSection(lines: string[]): string[] {
 	const startIndent = indentationOf(lines[0]);
 		
 	for (let endIdx = 1; endIdx < lines.length; endIdx++) {
-		if (indentationOf(lines[endIdx]).length < startIndent.length)
+		if (indentationOf(lines[endIdx]).length <= startIndent.length)
 			return lines.slice(1, endIdx);
 	}
 
@@ -115,8 +127,8 @@ function subtypeSection(lines: string[]): string[] {
 
 
 function indentationOf(line: string): string {
-	const indentRegex = /^([\t| ]*)(?=\w)/gm;
-	const indent = indentRegex.exec(line);
+	const indentRegex = /^([\t| ]*)(?=\w)/m;
+	const indent = line.match(indentRegex);
 	if (indent === null)
 		return '';
 	

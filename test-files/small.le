@@ -1,4 +1,18 @@
+%type checking: on
+the type hierarchy is:
+a place
+    a location
+
+a person
+    a spouse
+
 the templates are:
+*a place* is on the map.
+*a location* is in europe.
+
+*a person* has a job.
+*a spouse* is married.
 
 the knowledge base Small includes:
-appending  then foo gives bar. 
+jane has a job if
+    jane is married.
