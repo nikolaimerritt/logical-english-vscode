@@ -8,16 +8,6 @@ export enum TokenKind {
 }
 
 
-// export class TemplateVariable {
-// 	public readonly type: Type;
-// 	public readonly kind = TemplateElementKind.Type;
-
-// 	constructor(_name: string, typeTree: TypeTree) {
-// 		this.type = typeTree.getType(_name);
-// 	}
-// }
-
-
 export type PredicateWord = string;
 
 
@@ -316,32 +306,58 @@ export class Template {
 	}
 
 
-	private termsFromIncompleteLiteral(literal: string): string[] {
-		const literalWords = literal.split(/\s+/g);
-		const predicateWords = this.predicateWords()
-		.flatMap(w => w.split(/\s+/g));
+	// public termsFromIncompleteLiteral(literal: string): string[] {
+	// 	const literalWords = literal.split(/\s+/g);
+	// 	const predicateWords = this.predicateWords()
+	// 	.flatMap(w => w.split(/\s+/g));
+	// 	const terms: string[] = [];
+	// 	let currentTerm = '';
+
+
+	// 	for (let i = 0; i < literalWords.length; i++) {
+	// 		if (predicateWords.length > 0 && 
+	// 				(literalWords[i] === predicateWords[0] 
+	// 					|| i === literalWords.length - 1 && predicateWords[0].startsWith(literalWords[i]))) {
+	// 			if (currentTerm.length > 0) {
+	// 				terms.push(currentTerm);
+	// 				currentTerm = '';  
+	// 			}
+	// 			predicateWords.shift(); // pop first word
+	// 		} else {
+	// 			if (currentTerm.length > 0) 
+	// 				currentTerm += ' ';
+	// 			currentTerm += literalWords[i];
+	// 		}
+	// 	}
+
+	// 	if (currentTerm.length > 0)
+	// 		terms.push(currentTerm);
+
+	// 	return terms;
+	// }
+
+
+	// *a person* wants to see *a place*
+	// fred bloggs
+	// fred bloggs wan
+	// fred bloggs wants to see italy
+	public termsFromIncompleteLiteral(literal: string): string[] {
 		const terms: string[] = [];
-		let currentTerm = '';
-
-
-		for (let i = 0; i < literalWords.length; i++) {
-			if (predicateWords.length > 0 && 
-					(literalWords[i] === predicateWords[0] 
-						|| i === literalWords.length - 1 && predicateWords[0].startsWith(literalWords[i]))) {
-				if (currentTerm.length > 0) {
-					terms.push(currentTerm);
-					currentTerm = '';  
-				}
-				predicateWords.shift(); // pop first word
-			} else {
-				if (currentTerm.length > 0) 
-					currentTerm += ' ';
-				currentTerm += literalWords[i];
+		for (const predWord of this.predicateWords()) {
+			let predWordIdx = literal.indexOf(predWord);
+			if (predWordIdx === -1) {
+				// does the literal ends with the start of the predicate word?
+				const maybePredWordIdx = Array.from(Array(literal.length).keys())
+				.find(i => predWord.startsWith(literal.slice(i, undefined)));
+				if (maybePredWordIdx !== undefined)
+					predWordIdx = maybePredWordIdx;
+				
+			} 
+			if (predWordIdx !== -1) {
+				terms.push(literal.slice(0, predWordIdx).trim());
+				literal = literal.slice(predWordIdx + predWord.length, undefined).trim();
 			}
 		}
-
-		if (currentTerm.length > 0)
-			terms.push(currentTerm);
 
 		return terms;
 	}
@@ -362,31 +378,17 @@ export class Template {
 		return this.hasSameSigniature(templateOfLiteral);
 	}
 
-	// *an X*        really likes   *an object*   with value *a value*
-	// bob spence    really likes   plates        wit   
-	// score = (1 + 0.5) / 2
-	public matchScore(literal: string): number { // 0 <= return value <= 1
-		let score = 0;
-		// score = length of literal words before last term
-		// score = number of predicate words that appear consecutively in literal
-		// if the literal ends with the beginning of a predicate, add 0.5
-		
-		for (const word of this.predicateWords()) {
-			const wordIdx = literal.indexOf(word);
-			if (wordIdx === -1) {
-				const lastLiteralWord = literal.split(/\s+/g).at(-1);
-				if (lastLiteralWord !== undefined && word.startsWith(lastLiteralWord.trim()))
-					score += 0.5;
-				
-				break;
-			} else {
-				score += word.length;
-				literal = literal.slice(wordIdx + 1, );
-			}
-		}
 
-		// return score / this.predicateWords().length;
-		return score;
+	// score = length of literal words that are shared
+	// *a person* wants to see *a thing* at *a location*
+	// fred bloggs [wan] --> score = 3
+	// fred bloggs [wants to see] the eiffel tower [at] --> score = 12
+	// wants to [wants to see] --> score = 10
+	public incompleteMatchScore(literal: string): number {
+		const terms = this.termsFromIncompleteLiteral(literal);
+		const termsLength = terms.join().length;
+		const predicateWordsLength = literal.length - termsLength;
+		return predicateWordsLength;
 	}
 
 	// *an A* 		really likes 	*a B* 	with value 	*a C*

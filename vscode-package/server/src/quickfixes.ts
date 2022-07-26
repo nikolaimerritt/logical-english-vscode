@@ -10,7 +10,7 @@ import { Term } from './term';
 // adapted from https://github.com/YuanboXue-Amber/endevor-scl-support/blob/master/server/src/CodeActionProvider.ts
 
 export function quickfixes(document: TextDocument, params: CodeActionParams): CodeAction[] {
-	// debugOnStart();
+	debugOnStart();
 	
 	const text = ignoreComments(document.getText());
 	return [

@@ -48,10 +48,14 @@ export function textDocumentDiagnostics(document: TextDocument): Diagnostic[] {
 
 
 export function debugOnStart() {
-	// const template = Template.fromString(new TypeTree(), '*a person* wants to see *a thing*');
-	// const otherTemplate = template.withMissingTerms(new TypeTree(), 'fred bloggs wants to see india');
-	// console.log('Template with missing terms:');
-	// console.log(otherTemplate);
+	const template = Template.fromString(new TypeTree(), '*a person* wants to see *a thing* at *a location*');
+	[
+		'fred bloggs',
+		'fred bloggs want',
+		'fred bloggs wants to see at',
+		'fred bloggs wants to see the eiffel tower at',
+		'fred bloggs wants to see the eiffel tower at home'
+	].forEach(lit => console.log(template.termsFromIncompleteLiteral(lit)));
 }
 
 

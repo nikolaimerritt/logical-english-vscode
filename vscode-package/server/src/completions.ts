@@ -45,16 +45,18 @@ function literalCompletion(text: string, params: TextDocumentPositionParams): Co
 	.map(template => {
 		const templateWithMissingTerms = template.withMissingTerms(typeTree, literal);
 		const textEdit = TextEdit.replace(literalToEndOfLine, templateWithMissingTerms.toSnippet());
-		const score = template.matchScore(literal);
-		const completion = {
+		const score = template.incompleteMatchScore(literal);
+		const completion: CompletionItem = {
 			label: templateWithMissingTerms.toString(),
-			kind: CompletionItemKind.Class,
+			kind: CompletionItemKind.Text,
 			insertTextFormat: InsertTextFormat.Snippet,
 			textEdit,
 			sortText: String(score).padStart(4, '0')
 		};
 		return [completion, score];
 	});
+	console.log(`Completions for ${literal}`);
+	console.log(completionsWithScores);
 
 
 	const completions = sortBy(completionsWithScores, ([_, score]) => score)

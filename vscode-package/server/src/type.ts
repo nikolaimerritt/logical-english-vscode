@@ -19,7 +19,7 @@ export class Type {
 
 export class TypeTree {
 	private readonly root: Type;
-	private static readonly rootTypeName = 'any';
+	private static readonly rootTypeName = 'thing';
 
 
 	constructor(root: Type = new Type(TypeTree.rootTypeName)) {
