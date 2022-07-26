@@ -43,7 +43,7 @@ function literalCompletion(text: string, params: TextDocumentPositionParams): Co
 
 	const completionsWithScores: [CompletionItem, number][] = templatesInDocument(text)
 	.map(template => {
-		const templateWithMissingTerms = template.withMissingTerms(typeTree, literal);
+		const templateWithMissingTerms = template.substituteTerms(typeTree, literal);
 		const textEdit = TextEdit.replace(literalToEndOfLine, templateWithMissingTerms.toSnippet());
 		const score = template.incompleteMatchScore(literal);
 		const completion: CompletionItem = {
@@ -55,8 +55,8 @@ function literalCompletion(text: string, params: TextDocumentPositionParams): Co
 		};
 		return [completion, score];
 	});
-	console.log(`Completions for ${literal}`);
-	console.log(completionsWithScores);
+	// console.log(`Completions for ${literal}`);
+	// console.log(completionsWithScores);
 
 
 	const completions = sortBy(completionsWithScores, ([_, score]) => score)

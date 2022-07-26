@@ -2,8 +2,8 @@
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { Position, Range } from 'vscode-languageserver';
 import { Template } from './template';
-import { Term } from './term';
-import { TypeTree } from './type';
+import { Term } from './element';
+import { TypeTree } from './type-tree';
 import { defaultTemplateStrings } from './default-templates';
 
 export type ContentRange<T> = {
@@ -221,7 +221,7 @@ export function termsInClause(templates: Template[], clause: ContentRange<string
 		if (template !== undefined) {
 			let termIdx = 0;
 
-			for (const term of template.termsFromLiteral(literal)) {
+			for (const term of template.parseTerms(literal)) {
 				termIdx = literal.indexOf(term.name, termIdx);
 				termRanges.push({
 					content: term,

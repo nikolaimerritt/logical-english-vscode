@@ -5,7 +5,7 @@ import { literalHasNoTemplateMessage } from './diagnostics';
 import { literalsInDocument, sectionWithHeader, templatesInDocument, clausesInDocument, ignoreComments, ContentRange, literalsInClause, typeTreeInDocument } from './utils';
 
 import { debugOnStart } from './diagnostics';
-import { Term } from './term';
+import { Term } from './element';
 
 // adapted from https://github.com/YuanboXue-Amber/endevor-scl-support/blob/master/server/src/CodeActionProvider.ts
 
@@ -96,7 +96,7 @@ function termsInClause(templates: Template[], clause: ContentRange<string>): Ter
 		// const template = templates.find(t => t.matchesLiteral(literal));
 		const template = Template.findBestMatch(templates, literal);
 		if (template !== undefined) 
-			terms = terms.concat(template.termsFromLiteral(literal));
+			terms = terms.concat(template.parseTerms(literal));
 	}
 
 	return terms;

@@ -13,7 +13,8 @@ import {
 	typeTreeInDocument 
 } from './utils';
 import { Template } from './template';
-import { Type, TypeTree } from './type';
+import { Type } from './element';
+import { TypeTree } from './type-tree';
 
 export interface ExampleSettings {
 	maxNumberOfProblems: number;
@@ -55,7 +56,7 @@ export function debugOnStart() {
 		'fred bloggs wants to see at',
 		'fred bloggs wants to see the eiffel tower at',
 		'fred bloggs wants to see the eiffel tower at home'
-	].forEach(lit => console.log(template.termsFromIncompleteLiteral(lit)));
+	].forEach(lit => console.log(template.parseElements(lit)));
 }
 
 

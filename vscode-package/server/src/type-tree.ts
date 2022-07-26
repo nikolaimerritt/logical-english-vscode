@@ -1,20 +1,5 @@
 import { Template } from './template';
-
-export class Type {
-	public readonly name: string;
-	public readonly subtypes: Type[];
-
-	constructor(_name: string, _subtypes: Type[] = []) {
-		this.name = _name;
-		this.subtypes = _subtypes;
-	}
-
-	public makeSubtype(type: Type) {
-		if (type.name !== this.name)
-			this.subtypes.push(type);
-		else throw new Error(`Type ${this.name} cannot set itself as a sub-type.`);
-	}
-}
+import { Type } from './element';
 
 
 export class TypeTree {

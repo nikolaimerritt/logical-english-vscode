@@ -53,7 +53,7 @@ function termInLiteralTokens(text: string): TokenDetails[] {
         const template = Template.findBestMatch(templates, literal);
         
         if (template !== undefined) {
-            const terms = template.termsFromLiteral(literal);
+            const terms = template.parseTerms(literal);
             
             let char = range.start.character;
             for (const { name: term } of terms) {
