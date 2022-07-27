@@ -1,8 +1,6 @@
 # Personal
-*.md
 *.vsix
 
-foo.le
 *.aux
 *.lof
 *.log
