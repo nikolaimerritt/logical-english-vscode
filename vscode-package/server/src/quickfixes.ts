@@ -2,7 +2,16 @@ import { CodeAction, CodeActionParams, DiagnosticSeverity, CodeActionKind, Posit
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { Template } from './template';
 import { literalHasNoTemplateMessage } from './diagnostics';
-import { literalsInDocument, sectionWithHeader, templatesInDocument, clausesInDocument, ignoreComments, ContentRange, literalsInClause, typeTreeInDocument } from './utils';
+import { ignoreComments } from './utils';
+import { 
+	literalsInDocument, 
+	sectionWithHeader, 
+	templatesInDocument, 
+	clausesInDocument, 
+	ContentRange, 
+	literalsInClause, 
+	typeTreeInDocument 
+} from './parsing';
 
 import { debugOnStart } from './diagnostics';
 import { Term } from './element';

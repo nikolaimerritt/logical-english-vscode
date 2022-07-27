@@ -1,6 +1,6 @@
 import { deepCopy, removeBlanks, removeFirst, regexSanitise, maximal, sortBy, sanitiseLiteral } from './utils';
 import { TypeTree } from './type-tree';
-import { Term, Type, TemplateElement, Join, ElementKind, LiteralElement } from './element';
+import { Term, Type, TemplateElement, Surrounding, ElementKind, LiteralElement } from './element';
 
 
 
@@ -26,9 +26,7 @@ export class Template {
 			if (elString.length > 0) {
 				const varName = elString.match(Template.typeNameRegex);
 				if (varName === null) 
-					// elements.push(new PredicateWord(elString));
-					// elements.push(Token.fromWord(elString));
-					elements.push(new Join(elString));
+					elements.push(new Surrounding(elString));
 
 				else {
 					const typeName = useExistingVariableNames 
@@ -60,25 +58,19 @@ export class Template {
 				const type = typeTree.getType(Template.variableName(variableIdx++));
 				elements.push(type);
 			}
-				// return new TemplateVariable(Template.variableName(variableIdx++));
-				// elements.push(typeTree.getType())
-				// return Token.fromType(typeTree.getType(Template.variableName(variableIdx++)));
-			// return new PredicateWord(el);
 			else 
-				elements.push(new Join(el));
-			// return Token.fromWord(el);
+				elements.push(new Surrounding(el));
 		}
 
 		return new Template(elements);
 	}
 
-	// TODO: refactor
 	public static fromLGG(typeTree: TypeTree, literals: string[]): Template | undefined {
 		if (literals.length === 0)
 			return undefined;
 
 		if (literals.length === 1)
-			return new Template([ new Join(literals[0]) ]);
+			return new Template([ new Surrounding(literals[0]) ]);
 
 		const wordsFromEachLiteral = literals.map(literal => sanitiseLiteral(literal).split(/\s+/g));
 		const predicateWords = Template.predicateWordsFromLiterals(wordsFromEachLiteral);
@@ -100,7 +92,7 @@ export class Template {
 	public toString(): string {
 		const elementStrings: string[] = this.elements.map(el => {
 			switch (el.kind) {
-				case ElementKind.Join:
+				case ElementKind.Surrounding:
 					return el.phrase;
 				case ElementKind.Type:
 					return `*${el.name}*`;
@@ -134,7 +126,7 @@ export class Template {
 		const newElements: TemplateElement[] = [];
 
 		for (const el of this.elements) {
-			if (el.kind === ElementKind.Join && variableRegex.test(term.name)) {
+			if (el.kind === ElementKind.Surrounding && variableRegex.test(term.name)) {
 				const elementStrings = el.phrase.split(variableRegex);
 				for (let elString of elementStrings) {
 					elString = elString.trim();
@@ -142,7 +134,7 @@ export class Template {
 						if (elString === term.name)
 							newElements.push(term.type);
 						else 
-							newElements.push(new Join(elString));
+							newElements.push(new Surrounding(elString));
 					}
 				}
 			} 
@@ -175,7 +167,7 @@ export class Template {
 
 	private static predicateWordsFromLiterals(literals: string[][]): string[] {
 		const literal = literals[0];
-		const otherLiterals: string[][] = deepCopy(literals.slice(1, undefined));
+		const otherLiterals = deepCopy(literals.slice(1, undefined));
 		const predicateWords: string[] = [];
 
 		for (const word of literal) {
@@ -223,7 +215,7 @@ export class Template {
 		
 		for (let i = 0; i < this.elements.length; i++) {
 			const join = this.elements[i];
-			if (join.kind === ElementKind.Join) {
+			if (join.kind === ElementKind.Surrounding) {
 				let phraseIdx = literal.indexOf(join.phrase);
 				let phrase = join.phrase;
 				if (phraseIdx === -1) {
@@ -246,7 +238,7 @@ export class Template {
 					}
 				}
 
-				elements.push(new Join(phrase));
+				elements.push(new Surrounding(phrase));
 				literal = sanitiseLiteral(literal.slice(phraseIdx + phrase.length + 1, ));
 			}
 		}
@@ -266,10 +258,10 @@ export class Template {
 		.map(term => term as Term);
 	}
 
-	public parseJoins(literal: string): Join[] {
+	public parseSurroundings(literal: string): Surrounding[] {
 		return this.parseElements(literal)
-		.filter(el => el.kind === ElementKind.Join) 
-		.map(join => join as Join);
+		.filter(el => el.kind === ElementKind.Surrounding) 
+		.map(join => join as Surrounding);
 	}
 
 
@@ -277,7 +269,7 @@ export class Template {
 	// TODO: why not simply extract predicate words from literal?
 	public matchesLiteral(literal: string): boolean {
 		const joins = this.predicateWords();
-		const otherJoins = this.parseJoins(literal);
+		const otherJoins = this.parseSurroundings(literal);
 
 		if (joins.length !== otherJoins.length)
 			return false;
@@ -310,11 +302,11 @@ export class Template {
 		const terms = this.parseTerms(literal);
 		const elements: TemplateElement[] = [];
 		this.elements.forEach(el => {
-			if (el.kind === ElementKind.Join) 
+			if (el.kind === ElementKind.Surrounding) 
 				elements.push(el);
 			else if (el.kind === ElementKind.Type) {
 				if (terms.length > 0) {
-					elements.push(new Join(terms[0].name));
+					elements.push(new Surrounding(terms[0].name));
 					terms.shift(); // remove first term
 				} else 
 					elements.push(el);
@@ -340,10 +332,10 @@ export class Template {
 	}
 
 
-	public predicateWords(): Join[] {
+	public predicateWords(): Surrounding[] {
 		return this.elements
-		.filter(el => el.kind === ElementKind.Join)
-		.map(el => el as Join);
+		.filter(el => el.kind === ElementKind.Surrounding)
+		.map(el => el as Surrounding);
 	} 
 
 

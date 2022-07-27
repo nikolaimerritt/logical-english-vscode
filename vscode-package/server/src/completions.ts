@@ -1,7 +1,14 @@
 import { Position, Range, TextDocument } from 'vscode-languageserver-textdocument';
-import { CompletionItem, CompletionItemKind, /* InsertReplaceEdit,*/ TextDocumentPositionParams, InsertTextFormat, InsertReplaceEdit, TextEdit } from "vscode-languageserver";
-import { literalAtPosition, areaWithClauses, templatesInDocument, typeTreeInDocument, sortBy } from './utils';
-import { Template } from './template';
+import { 
+	CompletionItem, 	
+	CompletionItemKind, /* InsertReplaceEdit,*/ 
+	TextDocumentPositionParams, 
+	InsertTextFormat, 
+	InsertReplaceEdit, 
+	TextEdit } 
+from "vscode-languageserver";
+import { areaWithClauses, templatesInDocument, typeTreeInDocument } from './parsing';
+import { sortBy, literalAtPosition } from './utils';
 
 
 export function provideCompletions(document: TextDocument, params: TextDocumentPositionParams): CompletionItem[] {	
@@ -65,24 +72,4 @@ function literalCompletion(text: string, params: TextDocumentPositionParams): Co
 	.slice(0, 3);
 
 	return completions;
-}
-
-function dummyCompletion(): CompletionItem[] {
-	return [
-		{
-			label: 'TypeScript',
-			kind: CompletionItemKind.Text,
-			data: 1
-		},
-		{
-			label: 'JavaScript',
-			kind: CompletionItemKind.Text,
-			data: 2
-		},
-		{
-			label: 'LogicalEnglish',
-			kind: CompletionItemKind.Text,
-			data: 3
-		}
-	];
 }

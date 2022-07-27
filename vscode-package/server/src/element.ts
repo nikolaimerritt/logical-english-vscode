@@ -1,12 +1,12 @@
 
 export enum ElementKind {
-	Join,
+	Surrounding,
 	Type,
 	Term
 }
 
-export class Join {
-	public readonly kind = ElementKind.Join;
+export class Surrounding {
+	public readonly kind = ElementKind.Surrounding;
 	public readonly phrase: string;
 
 	constructor(name: string) {
@@ -45,5 +45,5 @@ export class Term {
 }
 
 
-export type TemplateElement = Join | Type;
-export type LiteralElement = Join | Term;
+export type TemplateElement = Surrounding | Type;
+export type LiteralElement = Surrounding | Term;

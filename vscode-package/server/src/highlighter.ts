@@ -11,7 +11,8 @@ import {
 
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { Template } from './template';
-import { ignoreComments, literalsInDocument, templatesInDocument } from './utils';
+import { literalsInDocument, templatesInDocument } from './parsing';
+import { ignoreComments } from './utils';
 
 
 export const tokenTypes = ['variable', 'class', 'interface', 'keyword'];

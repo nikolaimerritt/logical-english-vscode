@@ -8,10 +8,10 @@ import {
 	templatesInDocument, 
 	literalsInDocument, 
 	clausesInDocument, 
-	ignoreComments, 
-	termsInClause, 
+	termsInClause,
 	typeTreeInDocument 
-} from './utils';
+} from './parsing';
+import { ignoreComments } from './utils';
 import { Template } from './template';
 import { Type } from './element';
 import { TypeTree } from './type-tree';
@@ -57,6 +57,7 @@ export function debugOnStart() {
 	// 	'fred bloggs wants to see the eiffel tower at',
 	// 	'fred bloggs wants to see the eiffel tower at home'
 	// ].forEach(lit => console.log(template.parseElements(lit)));
+
 }
 
 
