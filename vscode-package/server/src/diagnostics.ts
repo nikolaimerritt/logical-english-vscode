@@ -34,15 +34,13 @@ export function textDocumentDiagnostics(document: TextDocument): Diagnostic[] {
 	const typeChecking = typeCheckingRegex.test(text);
 	text = ignoreComments(text);
 
-	const typeTree = typeTreeInDocument(text);
-
 	const diags = [];
-	diags.push(... literalHasNoTemplateDiags(text, typeTree));
+	diags.push(... literalHasNoTemplateDiags(text));
 	diags.push(...misalignedConnectivesDiags(text));
 
 
 	if (typeChecking) 
-		diags.push(...typeMismatchDiags(text, typeTree));
+		diags.push(...typeMismatchDiags(text));
 
 	return diags;
 }
@@ -62,7 +60,7 @@ export function debugOnStart() {
 
 
 // refactor to export function text -> literals with no template
-function literalHasNoTemplateDiags(text: string, typeTree: TypeTree): Diagnostic[] {
+function literalHasNoTemplateDiags(text: string): Diagnostic[] {
 	const templates = templatesInDocument(text);
 
 	const diagnostics: Diagnostic[] = [];	
@@ -94,7 +92,7 @@ function misalignedConnectivesDiags(text: string): Diagnostic[] {
 	return diagnostics;
 }
 
-function typeMismatchDiags(text: string, typeTree: TypeTree): Diagnostic[] {
+function typeMismatchDiags(text: string): Diagnostic[] {
 	const diagnostics: Diagnostic[] = [];
 	const templates = templatesInDocument(text);
 
@@ -120,8 +118,6 @@ function typeMismatchDiags(text: string, typeTree: TypeTree): Diagnostic[] {
 		}
 	}
 
-	console.log('Type tree:');
-	console.log(typeTree.toString());
 	return diagnostics;
 }
 

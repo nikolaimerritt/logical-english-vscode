@@ -22,9 +22,7 @@ export function quickfixes(document: TextDocument, params: CodeActionParams): Co
 	debugOnStart();
 	
 	const text = ignoreComments(document.getText());
-	return [
-		...literalWithNoTemplateFixes(text, params)
-	];
+	return literalWithNoTemplateFixes(text, params);
 }
 
 
@@ -61,7 +59,7 @@ function literalWithNoTemplateFixes(text: string, params: CodeActionParams): Cod
 
 	// does not generate the trivial template '*an X*'
 	// or a template with no varaibles
-	if (generatedTemplate.predicateWords().length === 0 || generatedTemplate.types().length === 0)
+	if (generatedTemplate.predicateWords.length === 0 || generatedTemplate.types.length === 0)
 		return [];
 	
 	const actions: CodeAction[] = [];

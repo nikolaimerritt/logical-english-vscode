@@ -5,10 +5,12 @@ import {
 	TextDocumentPositionParams, 
 	InsertTextFormat, 
 	InsertReplaceEdit, 
-	TextEdit } 
+	TextEdit 
+} 
 from "vscode-languageserver";
 import { areaWithClauses, templatesInDocument, typeTreeInDocument } from './parsing';
 import { sortBy, literalAtPosition } from './utils';
+import { Template } from './template';
 
 
 export function provideCompletions(document: TextDocument, params: TextDocumentPositionParams): CompletionItem[] {	
@@ -47,12 +49,18 @@ function literalCompletion(text: string, params: TextDocumentPositionParams): Co
 		end: literalEnd
 	};
 
+	const maxCompletions = 3;
 
-	const completionsWithScores: [CompletionItem, number][] = templatesInDocument(text)
-	.map(template => {
+	const templates = templatesInDocument(text);
+	const bestTemplatesWithScores = sortBy(
+		templates.map(t => [t, t.matchScore(literal)] as [Template, number]),
+		([_, score]) => score
+	)
+	.slice(Math.max(templates.length - maxCompletions, 0));
+
+	return bestTemplatesWithScores.map(([template, score]) => {
 		const templateWithMissingTerms = template.substituteTerms(typeTree, literal);
 		const textEdit = TextEdit.replace(literalToEndOfLine, templateWithMissingTerms.toSnippet());
-		const score = template.incompleteMatchScore(literal);
 		const completion: CompletionItem = {
 			label: templateWithMissingTerms.toString(),
 			kind: CompletionItemKind.Text,
@@ -60,16 +68,6 @@ function literalCompletion(text: string, params: TextDocumentPositionParams): Co
 			textEdit,
 			sortText: String(score).padStart(4, '0')
 		};
-		return [completion, score];
+		return completion;
 	});
-	// console.log(`Completions for ${literal}`);
-	// console.log(completionsWithScores);
-
-
-	const completions = sortBy(completionsWithScores, ([_, score]) => score)
-	.reverse()
-	.map(([template, _]) => template)
-	.slice(0, 3);
-
-	return completions;
 }

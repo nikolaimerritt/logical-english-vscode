@@ -268,7 +268,7 @@ export class Template {
 	// TODO: use clause to see if the types of literal's terms match with this template
 	// TODO: why not simply extract predicate words from literal?
 	public matchesLiteral(literal: string): boolean {
-		const joins = this.predicateWords();
+		const joins = this.predicateWords;
 		const otherJoins = this.parseSurroundings(literal);
 
 		if (joins.length !== otherJoins.length)
@@ -288,9 +288,10 @@ export class Template {
 	// fred bloggs [wan] --> score = 3
 	// fred bloggs [wants to see] the eiffel tower [at] --> score = 12
 	// wants to [wants to see] --> score = 10
-	public incompleteMatchScore(literal: string): number {
-		const terms = this.parseTerms(literal);
-		const termsLength = terms.join().length;
+	public matchScore(literal: string): number {
+		const terms = this.parseTerms(literal)
+		.map(t => t.name);
+		const termsLength = terms.join(' ').length;
 		const predicateWordsLength = literal.length - termsLength;
 		return predicateWordsLength;
 	}
@@ -326,20 +327,20 @@ export class Template {
 		if (candidates.length === 0)
 			return undefined;
 
-		const maxVariableCount = Math.max(...candidates.map(t => t.types().length));
-		const candidatesWithMaxVars = candidates.filter(t => t.types().length === maxVariableCount);
-		return maximal(candidatesWithMaxVars, t => t.predicateWords().join(' ').length);
+		const maxVariableCount = Math.max(...candidates.map(t => t.types.length));
+		const candidatesWithMaxVars = candidates.filter(t => t.types.length === maxVariableCount);
+		return maximal(candidatesWithMaxVars, t => t.predicateWords.join(' ').length);
 	}
 
 
-	public predicateWords(): Surrounding[] {
+	public get predicateWords(): Surrounding[] {
 		return this.elements
 		.filter(el => el.kind === ElementKind.Surrounding)
 		.map(el => el as Surrounding);
 	} 
 
 
-	public types(): Type[] {
+	public get types(): Type[] {
 		return this.elements
 		.filter(el => el.kind === ElementKind.Type)
 		.map(el => el as Type);
