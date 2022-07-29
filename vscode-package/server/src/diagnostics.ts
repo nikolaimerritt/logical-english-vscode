@@ -47,15 +47,12 @@ export function textDocumentDiagnostics(document: TextDocument): Diagnostic[] {
 
 
 export function debugOnStart() {
-	// const template = Template.fromString(new TypeTree(), '*a person* wants to see *a thing* at *a location*');
-	// [
-	// 	'fred bloggs',
-	// 	'fred bloggs want',
-	// 	'fred bloggs wants to see at',
-	// 	'fred bloggs wants to see the eiffel tower at',
-	// 	'fred bloggs wants to see the eiffel tower at home'
-	// ].forEach(lit => console.log(template.parseElements(lit)));
-
+	// const template = Template.fromString(new TypeTree(), 
+	// 	'the amount of gain excluded for *a person* from *a sale or exchange* under subsection (a) shall not exceed *an amount*'
+	// );
+	// const incompleteLiteral = 'gross i';
+	// console.log(`Elements from ${incompleteLiteral}:`);
+	// console.log(template.parseElements(incompleteLiteral));
 }
 
 

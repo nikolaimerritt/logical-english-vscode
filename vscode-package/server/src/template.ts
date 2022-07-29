@@ -212,6 +212,9 @@ export class Template {
 	public parseElements(literal: string): LiteralElement[] {
 		literal = sanitiseLiteral(literal);
 		const elements: LiteralElement[] = [];
+		let typeOfLeftoversIdx = this.elements[0].kind === ElementKind.Type
+			? 0
+			: -1;
 		
 		for (let i = 0; i < this.elements.length; i++) {
 			const join = this.elements[i];
@@ -229,6 +232,8 @@ export class Template {
 
 				if (phraseIdx === -1)
 					break;
+				
+				typeOfLeftoversIdx = i + 1;
 
 				if (i > 0 && phraseIdx > 0) {
 					const type = this.elements[i - 1];
@@ -243,9 +248,9 @@ export class Template {
 			}
 		}
 
-		if (literal.length > 0) {
-			const type = this.elements.at(-1);
-			if (type !== undefined && type.kind === ElementKind.Type)
+		if (literal.length > 0 && typeOfLeftoversIdx !== -1) {
+			const type = this.elements[typeOfLeftoversIdx];
+			if (type.kind === ElementKind.Type)
 				elements.push(new Term(sanitiseLiteral(literal), type));
 		}
 		return elements;
@@ -289,11 +294,10 @@ export class Template {
 	// fred bloggs [wants to see] the eiffel tower [at] --> score = 12
 	// wants to [wants to see] --> score = 10
 	public matchScore(literal: string): number {
-		const terms = this.parseTerms(literal)
-		.map(t => t.name);
-		const termsLength = terms.join(' ').length;
-		const predicateWordsLength = literal.length - termsLength;
-		return predicateWordsLength;
+		return this.parseSurroundings(literal)
+		.map(surrounding => surrounding.phrase)
+		.join(' ')
+		.length;
 	}
 
 	// *an A* 		really likes 	*a B* 	with value 	*a C*
