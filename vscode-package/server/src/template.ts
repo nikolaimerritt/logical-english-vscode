@@ -248,7 +248,7 @@ export class Template {
 			}
 		}
 
-		if (literal.length > 0 && typeOfLeftoversIdx !== -1) {
+		if (literal.length > 0 && typeOfLeftoversIdx !== -1 && typeOfLeftoversIdx < this.elements.length) {
 			const type = this.elements[typeOfLeftoversIdx];
 			if (type.kind === ElementKind.Type)
 				elements.push(new Term(sanitiseLiteral(literal), type));

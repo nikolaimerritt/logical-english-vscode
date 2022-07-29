@@ -13,6 +13,7 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 import { Template } from './template';
 import { literalsInDocument, templatesInDocument } from './parsing';
 import { ignoreComments } from './utils';
+import { ElementKind } from './element';
 
 
 export const tokenTypes = ['variable', 'class', 'interface', 'keyword'];
@@ -53,22 +54,43 @@ function termInLiteralTokens(text: string): TokenDetails[] {
         // const template = templates.find(template => template.matchesLiteral(literal));
         const template = Template.findBestMatch(templates, literal);
         
-        if (template !== undefined) {
-            const terms = template.parseTerms(literal);
+        // if (template !== undefined) {
+        //     const terms = template.parseTerms(literal);
             
-            let char = range.start.character;
-            for (const { name: term } of terms) {
-                const termStart = literal.indexOf(term);
-                char += termStart;
-                tokens.push({
-                    line: range.start.line,
-                    char,
-                    length: term.length,
-                    tokenTypeName: 'variable',
-                    tokenModifierName: null
-                });
-                literal = literal.slice(termStart + term.length, undefined);
-                char += term.length;
+        //     let char = range.start.character;
+        //     for (const { name: term } of terms) {
+        //         const termStart = literal.indexOf(term);
+        //         char += termStart;
+        //         tokens.push({
+        //             line: range.start.line,
+        //             char,
+        //             length: term.length,
+        //             tokenTypeName: 'variable',
+        //             tokenModifierName: null
+        //         });
+        //         literal = literal.slice(termStart + term.length, undefined);
+        //         char += term.length;
+        //     }
+        // }
+        if (template !== undefined) {
+            let elIdx = 0;
+            for (const el of template.parseElements(literal)) {
+                const elString = el.kind === ElementKind.Surrounding
+                    ? el.phrase
+                    : el.name;
+                
+                elIdx = literal.indexOf(elString, elIdx);
+
+                if (el.kind === ElementKind.Term) {
+                    tokens.push({
+                        line: range.start.line,
+                        char: range.start.character + elIdx,
+                        length: elString.length,
+                        tokenTypeName: 'variable',
+                        tokenModifierName: null
+                    });
+                }
+                elIdx += elString.length;
             }
         }
     }

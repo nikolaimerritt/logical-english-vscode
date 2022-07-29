@@ -8,11 +8,11 @@
 	},
 	"icon": "orange-circle.png",
 	"license": "MIT",
-	"version": "1.0.0",
-	"homepage": "https://github.com/nikolaimerritt/LogicalEnglish",
+	"version": "1.0.1",
+	"homepage": "https://github.com/nikolaimerritt/logical-english-vscode",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/nikolaimerritt/LogicalEnglish.git"
+		"url": "https://github.com/nikolaimerritt/logical-english-vscode.git"
 	},
 	"publisher": "nikolaimerritt",
 	"categories": [
