@@ -3,4 +3,4 @@ Please install the extension by searching for "logial english" in the extensions
 
 
 # How to provide feedback
-Improvements, suggestions or feature requests are always welcome! Please fill out the [Google Form](https://forms.gle/kG9sGvXu45ZgQKKs8)).
+Improvements, suggestions or feature requests are always welcome! Please fill out the [Google Form](https://forms.gle/kG9sGvXu45ZgQKKs8).
