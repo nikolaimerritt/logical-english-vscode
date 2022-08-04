@@ -14,8 +14,7 @@ import { Template } from './template';
 import { createNoSubstitutionTemplateLiteral } from 'typescript';
 
 
-export function provideCompletions(document: TextDocument, params: TextDocumentPositionParams): CompletionItem[] {	
-	const text = document.getText();
+export function provideCompletions(text: string, params: TextDocumentPositionParams): CompletionItem[] {	
 	return literalCompletion(text, params);
 }
 

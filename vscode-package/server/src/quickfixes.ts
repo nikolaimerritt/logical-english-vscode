@@ -59,7 +59,7 @@ function literalWithNoTemplateFixes(text: string, params: CodeActionParams): Cod
 
 	// does not generate the trivial template '*an X*'
 	// or a template with no varaibles
-	if (generatedTemplate.predicateWords.length === 0 || generatedTemplate.types.length === 0)
+	if (generatedTemplate.surroundings.length === 0 || generatedTemplate.types.length === 0)
 		return [];
 	
 	const actions: CodeAction[] = [];

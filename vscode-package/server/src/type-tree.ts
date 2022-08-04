@@ -29,7 +29,7 @@ export class TypeTree {
 	
 
 	public toString(): string {
-		return this.buildStringRepresentation('');
+		return this.buildStringRepresentation();
 	}
 
 	public addTypesFromTemplate(template: Template) {
@@ -82,11 +82,11 @@ export class TypeTree {
 		}
 	}
 
-	private buildStringRepresentation(repr: string, start = this.root, depth = 0): string {
-		const indent = '    ';
-		repr += indent.repeat(depth) + start.name + '\n';
+	private buildStringRepresentation(start = this.root): string {
+		const indent = '#';
+		let repr = start.name + '\n';
 		for (const sub of start.subtypes)
-			repr = this.buildStringRepresentation(repr, sub, depth + 1);
+			repr += indent + this.buildStringRepresentation(sub);
 		
 		return repr;
 	}

@@ -12,6 +12,23 @@ export class Template {
 		this.elements = elements;
 	}
 
+	public get surroundings(): Surrounding[] {
+		return this.elements
+		.filter(el => el.kind === ElementKind.Surrounding)
+		.map(el => el as Surrounding);
+	} 
+
+
+	public get types(): Type[] {
+		return this.elements
+		.filter(el => el.kind === ElementKind.Type)
+		.map(el => el as Type);
+	}
+
+	public get allElements(): TemplateElement[] {
+		return this.elements.map(x => x); // shallow copy
+	}
+
 
 	public static fromString(typeTree: TypeTree, templateString: string, useExistingVariableNames = true): Template {
 		templateString = templateString.replace('.', '');
@@ -273,7 +290,7 @@ export class Template {
 	// TODO: use clause to see if the types of literal's terms match with this template
 	// TODO: why not simply extract predicate words from literal?
 	public matchesLiteral(literal: string): boolean {
-		const joins = this.predicateWords;
+		const joins = this.surroundings;
 		const otherJoins = this.parseSurroundings(literal);
 
 		if (joins.length !== otherJoins.length)
@@ -333,20 +350,6 @@ export class Template {
 
 		const maxVariableCount = Math.max(...candidates.map(t => t.types.length));
 		const candidatesWithMaxVars = candidates.filter(t => t.types.length === maxVariableCount);
-		return maximal(candidatesWithMaxVars, t => t.predicateWords.join(' ').length);
-	}
-
-
-	public get predicateWords(): Surrounding[] {
-		return this.elements
-		.filter(el => el.kind === ElementKind.Surrounding)
-		.map(el => el as Surrounding);
-	} 
-
-
-	public get types(): Type[] {
-		return this.elements
-		.filter(el => el.kind === ElementKind.Type)
-		.map(el => el as Type);
+		return maximal(candidatesWithMaxVars, t => t.surroundings.join(' ').length);
 	}
 }
