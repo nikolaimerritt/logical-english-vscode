@@ -288,7 +288,6 @@ export class Template {
 
 
 	// TODO: use clause to see if the types of literal's terms match with this template
-	// TODO: why not simply extract predicate words from literal?
 	public matchesLiteral(literal: string): boolean {
 		const joins = this.surroundings;
 		const otherJoins = this.parseSurroundings(literal);

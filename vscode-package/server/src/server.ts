@@ -21,8 +21,8 @@ import {
 import { TextDocument } from 'vscode-languageserver-textdocument';
 
 import { quickfixes } from "./quickfixes";
-import { textDocumentDiagnostics } from "./diagnostics";
-import { provideCompletions } from './completions';
+import { diagnostics } from "./diagnostics";
+import { completions } from './completions';
 import { tokenTypes, tokenModifiers, semanticTokens } from './highlighter';
 
 // Create a connection for the server, using Node's IPC as a transport.
@@ -34,25 +34,14 @@ const documents = new TextDocuments(TextDocument);
 
 // let hasConfigurationCapability = false;
 
-connection.onInitialize((params: InitializeParams) => {
+connection.onInitialize(params => {
 	const capabilities = params.capabilities;
-
-	// Does the client support the `workspace/configuration` request?
-	// If not, we fall back using global settings.
-	// hasConfigurationCapability = !!(
-	// 	capabilities.workspace && !!capabilities.workspace.configuration
-	// );
-
 
 	const hasWorkspaceFolderCapability = !!(
 		capabilities.workspace && 
 		!!capabilities.workspace.workspaceFolders
 	);
-	// hasDiagnosticRelatedInformationCapability = !!(
-	// 	capabilities.textDocument &&
-	// 	capabilities.textDocument.publishDiagnostics &&
-	// 	capabilities.textDocument.publishDiagnostics.relatedInformation
-	// );
+
 	const hasCodeActionLiteralsCapability = !!(
 		capabilities.textDocument &&
 		capabilities.textDocument.codeAction &&
@@ -72,85 +61,19 @@ connection.onInitialize((params: InitializeParams) => {
 			}
 		}
 	};
-	if (hasWorkspaceFolderCapability) {
-		result.capabilities.workspace = {
-			workspaceFolders: {
-				supported: true
-			}
-		};
-	}
+	if (hasWorkspaceFolderCapability)
+		result.capabilities.workspace = { workspaceFolders: { supported: true } };
 
-	if (hasCodeActionLiteralsCapability) {
-		result.capabilities.codeActionProvider = {
-			codeActionKinds: ['quickfix', 'refactor.extract']
-		};
-	}
+	if (hasCodeActionLiteralsCapability) 
+		result.capabilities.codeActionProvider = { codeActionKinds: ['quickfix'] };
+	
 	return result;
 });
 
-// connection.onInitialized(() => {
-// 	// if (hasConfigurationCapability) {
-// 	// 	// Register for all configuration changes.
-// 	// 	connection.client.register(DidChangeConfigurationNotification.type, undefined);
-// 	// }
-// });
 
-// The example settings
-// interface ExampleSettings {
-// 	maxNumberOfProblems: number;
-// }
-
-// The global settings, used when the `workspace/configuration` request is not supported by the client.
-// Please note that this is not the case when using this server with the client provided in this example
-// but could happen with other clients.
-// const defaultSettings: ExampleSettings = { maxNumberOfProblems: 1000 };
-// let globalSettings: ExampleSettings = defaultSettings;
-
-// Cache the settings of all open documents
-// const documentSettings: Map<string, Thenable<ExampleSettings>> = new Map();
-
-// connection.onDidChangeConfiguration(() => {
-// 	// if (hasConfigurationCapability) {
-// 	// 	// Reset all cached document settings
-// 	// 	documentSettings.clear();
-// 	// } 
-// 	// else {
-// 	// 	globalSettings = <ExampleSettings>(
-// 	// 		(change.settings.languageServerExample || defaultSettings)
-// 	// 	);
-// 	// }
-
-// 	// Revalidate all open text documents
-// 	documents.all().forEach(validateTextDocument);
-// });
-
-// function getDocumentSettings(resource: string): Thenable<ExampleSettings> {
-// 	if (!hasConfigurationCapability) {
-// 		return Promise.resolve(globalSettings);
-// 	}
-// 	let result = documentSettings.get(resource);
-// 	if (!result) {
-// 		result = connection.workspace.getConfiguration({
-// 			scopeUri: resource,
-// 			section: 'languageServerExample'
-// 		});
-// 		documentSettings.set(resource, result);
-// 	}
-// 	return result;
-// }
-
-// Only keep settings for open documents
-// documents.onDidClose(e => {
-// 	// documentSettings.delete(e.document.uri);
-// });
-
-// The content of a text document has changed. This event is emitted
-// when the text document first opened or when its content has changed.
 documents.onDidChangeContent(change => {
-	// const files = ["foo/bar.txt", "plip/plop.ts"];
-	// connection.sendNotification("custom/loadFiles", [files]);
-	const diagnostics = textDocumentDiagnostics(change.document.getText());
-	connection.sendDiagnostics({ uri: change.document.uri, diagnostics });
+	const diags = diagnostics(change.document.getText());
+	connection.sendDiagnostics({ uri: change.document.uri, diagnostics: diags });
 });
 
 
@@ -172,10 +95,12 @@ connection.onCompletion(params => {
 	if (document === undefined)
 		return [];
 	
-	return provideCompletions(document.getText(), params);
+	return completions(document.getText(), params);
 });
 
-connection.languages.semanticTokens.on((params: SemanticTokensParams) => {
+// .on() sends and receives full semantic tokens of entire document
+// as opposed to a semantic tokens delta, or a semantic tokens range
+connection.languages.semanticTokens.on(params => {
 	const document = documents.get(params.textDocument.uri);
 	if (document === undefined)
 		return { data: [] };

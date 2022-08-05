@@ -18,15 +18,11 @@ import { Term } from './element';
 
 // adapted from https://github.com/YuanboXue-Amber/endevor-scl-support/blob/master/server/src/CodeActionProvider.ts
 
-export function quickfixes(document: TextDocument, params: CodeActionParams): CodeAction[] {
-	debugOnStart();
-	
+export function quickfixes(document: TextDocument, params: CodeActionParams): CodeAction[] {	
 	const text = ignoreComments(document.getText());
 	return literalWithNoTemplateFixes(text, params);
 }
 
-
-// TODO: create template even if there is only one literal
 function literalWithNoTemplateFixes(text: string, params: CodeActionParams): CodeAction[] {
 	const templates = templatesInDocument(text);
 	const typeTree = typeTreeInDocument(text);

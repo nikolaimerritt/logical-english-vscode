@@ -4,21 +4,18 @@ import {
 	CompletionItemKind, /* InsertReplaceEdit,*/ 
 	TextDocumentPositionParams, 
 	InsertTextFormat, 
-	InsertReplaceEdit, 
 	TextEdit 
 } 
 from "vscode-languageserver";
 import { areaWithClauses, templatesInDocument, typeTreeInDocument } from './parsing';
 import { sortBy, literalAtPosition } from './utils';
 import { Template } from './template';
-import { createNoSubstitutionTemplateLiteral } from 'typescript';
 
-
-export function provideCompletions(text: string, params: TextDocumentPositionParams): CompletionItem[] {	
+export function completions(text: string, params: TextDocumentPositionParams): CompletionItem[] {	
 	return literalCompletion(text, params);
 }
 
-// sort literal completion
+
 function literalCompletion(text: string, params: TextDocumentPositionParams): CompletionItem[] {
 	// const knowledgeBaseRange = sectionRange('knowledge base', text)?.range;
 	const allClausesRange = areaWithClauses(text)?.range;
@@ -51,12 +48,6 @@ function literalCompletion(text: string, params: TextDocumentPositionParams): Co
 
 	const maxCompletions = 3;
 	const templates = templatesInDocument(text);
-	
-	// console.log(`literal: ${literal}`);
-    // for (const t of templates) {
-	// 	console.log(`${t.toString()} \thas score = ${t.matchScore(literal)}`);
-	// }
-
 	const bestTemplatesWithScores = sortBy(
 		templates.map(t => [t, t.matchScore(literal)] as [Template, number]),
 		([_, score]) => score

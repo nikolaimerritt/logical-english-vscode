@@ -27,7 +27,7 @@ export const globalSettings: ExampleSettings = {
 export const literalHasNoTemplateMessage = "Literal has no template.";
 export const clauseHasMisalignedConnectivesMessage = 'Clause has misaligned connectives.';
 
-export function textDocumentDiagnostics(text: string): Diagnostic[] {	
+export function diagnostics(text: string): Diagnostic[] {	
 	debugOnStart();
 	const typeCheckingRegex = /^.*(%type checking:? on)\s*$/gm;
 	const typeChecking = typeCheckingRegex.test(text);
