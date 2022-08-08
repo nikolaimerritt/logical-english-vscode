@@ -85,7 +85,7 @@ connection.onCodeAction(params => {
 	if (document === undefined)
 		return [];
 	
-	return quickfixes(document, params);
+	return quickfixes(document.getText(), params);
 });
 
 
@@ -105,7 +105,7 @@ connection.languages.semanticTokens.on(params => {
 	if (document === undefined)
 		return { data: [] };
 	
-	return semanticTokens(document);
+	return semanticTokens(document.getText());
 });
 
 

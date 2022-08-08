@@ -27,13 +27,12 @@ interface TokenDetails {
     tokenModifierName: string | null
 }
 
-export function semanticTokens(document: TextDocument): SemanticTokens {
+export function semanticTokens(textWithComments: string): SemanticTokens {
     const tokens: TokenDetails[] = [];
-    const textWithComments = document.getText();
     tokens.push(...specialCommentTokens(textWithComments));
 
-    const text = ignoreComments(document.getText());
-    tokens.push(...termInLiteralTokens(text));
+    const textWithoutComments = ignoreComments(textWithComments);
+    tokens.push(...termInLiteralTokens(textWithComments));
 
     const builder = new SemanticTokensBuilder();
     for (const token of tokens) {

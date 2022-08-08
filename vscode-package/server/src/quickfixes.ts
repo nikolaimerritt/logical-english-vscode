@@ -18,8 +18,8 @@ import { Term } from './element';
 
 // adapted from https://github.com/YuanboXue-Amber/endevor-scl-support/blob/master/server/src/CodeActionProvider.ts
 
-export function quickfixes(document: TextDocument, params: CodeActionParams): CodeAction[] {	
-	const text = ignoreComments(document.getText());
+export function quickfixes(text: string, params: CodeActionParams): CodeAction[] {	
+	text = ignoreComments(text);
 	return literalWithNoTemplateFixes(text, params);
 }
 

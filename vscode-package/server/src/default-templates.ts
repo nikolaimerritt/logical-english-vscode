@@ -1,6 +1,6 @@
 export const defaultTemplateStrings = [
 	"appending *a thing* then *a list* gives *a list*",
-	"*an list* is the reverse of *a list*",
+	"*a list* is the reverse of *a list*",
 	"*a date* is the same date as *a date*",
 	"*a number* is between *a number* & *a number*",
 	"*a date* is 1 day after *a date*",
