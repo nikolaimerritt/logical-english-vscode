@@ -11,9 +11,11 @@ import {
 
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { Template } from './template';
-import { literalsInDocument, templatesInDocument } from './parsing';
+import { literalsInDocument as formulasInDocument, templatesInDocument } from './parsing';
 import { ignoreComments } from './utils';
 import { ElementKind } from './element';
+import { parseFormula, parseFormulaFromTemplate } from './term-extractor';
+import { Formula, TermKind } from './formula';
 
 
 export const tokenTypes = ['variable', 'class', 'interface', 'keyword'];
@@ -32,7 +34,7 @@ export function semanticTokens(textWithComments: string): SemanticTokens {
     tokens.push(...specialCommentTokens(textWithComments));
 
     const textWithoutComments = ignoreComments(textWithComments);
-    tokens.push(...termInLiteralTokens(textWithComments));
+    tokens.push(...tokensFromAllTerms(textWithComments));
 
     const builder = new SemanticTokensBuilder();
     for (const token of tokens) {
@@ -44,50 +46,63 @@ export function semanticTokens(textWithComments: string): SemanticTokens {
 }
 
 
-function termInLiteralTokens(text: string): TokenDetails[] {
+function tokensFromAllTerms(text: string): TokenDetails[] {
     const templates = templatesInDocument(text);
     const tokens: TokenDetails[] = [];
     
     // eslint-disable-next-line prefer-const
-    for (let { content: formula, range } of literalsInDocument(text)) {
-        // const template = templates.find(template => template.matchesLiteral(literal));
-        const template = Template.findBestMatch(templates, formula);
-        
-        // if (template !== undefined) {
-        //     const terms = template.parseTerms(literal);
-            
-        //     let char = range.start.character;
-        //     for (const { name: term } of terms) {
-        //         const termStart = literal.indexOf(term);
-        //         char += termStart;
+    for (let { content: formulaString, range } of formulasInDocument(text)) {
+        // let elIdx = 0;
+        // for (const el of parseFormula(templates, formula).elements) {
+        //     elIdx = formula.indexOf(el.name, elIdx);
+
+        //     if (el.elementKind === ElementKind.Term) {
         //         tokens.push({
         //             line: range.start.line,
-        //             char,
-        //             length: term.length,
+        //             char: range.start.character + elIdx,
+        //             length: el.name.length,
         //             tokenTypeName: 'variable',
         //             tokenModifierName: null
         //         });
-        //         literal = literal.slice(termStart + term.length, undefined);
-        //         char += term.length;
         //     }
+        //     elIdx += el.name.length;
         // }
-        if (template !== undefined) {
-            let elIdx = 0;
-            for (const el of template.parseFormula(formula).elements) {
-                elIdx = formula.indexOf(el.name, elIdx);
+        const formula = parseFormula(templates, formulaString);
+        const atomTokens = atomsInFormulaTokens(
+            formula,
+            range.start.line, 
+            range.start.character
+        );
 
-                if (el.elementKind === ElementKind.Term) {
-                    tokens.push({
-                        line: range.start.line,
-                        char: range.start.character + elIdx,
-                        length: el.name.length,
-                        tokenTypeName: 'variable',
-                        tokenModifierName: null
-                    });
-                }
-                elIdx += el.name.length;
+        tokens.push(...atomTokens);
+    }
+
+    return tokens;
+}
+
+function atomsInFormulaTokens(formula: Formula, line: number, startChar: number): TokenDetails[] {
+    const tokens: TokenDetails[] = [];
+    let elIdx = 0;
+
+    for (const el of formula.elements) {
+        elIdx = formula.name.indexOf(el.name, elIdx);
+
+        if (el.elementKind === ElementKind.Term) {
+            if (el.termKind === TermKind.Atom) {
+                tokens.push({
+                    line,
+                    char: startChar + elIdx,
+                    length: el.name.length,
+                    tokenTypeName: 'variable',
+                    tokenModifierName: null
+                });
+            }
+            else { // el is formula
+                const subformulaAtoms = atomsInFormulaTokens(el, line, startChar + elIdx);
+                tokens.push(...subformulaAtoms);
             }
         }
+        elIdx += el.name.length;
     }
 
     return tokens;

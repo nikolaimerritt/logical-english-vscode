@@ -21,21 +21,17 @@ export class Surrounding {
 export class Type {
 	public readonly elementKind = ElementKind.Type;
 	public readonly name: string;
-	private readonly _subtypes: Type[] = [];
+	public readonly subtypes: Type[] = [];
 
 	constructor(name: string, subtypes: Type[] = []) {
 		this.name = name;
-		this._subtypes = subtypes;
+		this.subtypes = subtypes;
 	}
 
-
-	public get subtypes() {
-		return this._subtypes;
-	}
 
 	public makeSubtype(type: Type) {
 		if (type.name !== this.name)
-			this._subtypes.push(type);
+			this.subtypes.push(type);
 		else throw new Error(`Type ${this.name} cannot set itself as a sub-type.`);
 	}
 }

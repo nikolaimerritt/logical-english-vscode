@@ -4,6 +4,7 @@ import { Term } from './formula';
 import { TypeTree } from './type-tree';
 import { defaultTemplateStrings } from './default-templates';
 import { sanitiseLiteral } from './utils';
+import { parseFormulaFromTemplate } from './term-extractor';
 
 
 export type ContentRange<T> = {
@@ -216,24 +217,24 @@ export function literalsInDocument(text: string): ContentRange<string>[] {
 export function termsInClause(templates: Template[], clause: ContentRange<string>): ContentRange<Term>[] {
 	const termRanges: ContentRange<Term>[] = [];
 
-	for (const { content: literal, range: literalRange } of literalsInClause(clause)) {
+	for (const { content: formula, range: formulaRange } of literalsInClause(clause)) {
 		// const template = templates.find(t => t.matchesLiteral(literal));
-		const template = Template.findBestMatch(templates, literal);
+		const template = Template.findBestMatch(templates, formula);
 		if (template !== undefined) {
 			let termIdx = 0;
 
-			for (const term of template.parseTerms(literal)) {
-				termIdx = literal.indexOf(term.name, termIdx);
+			for (const term of parseFormulaFromTemplate(template, formula).terms) {
+				termIdx = formula.indexOf(term.name, termIdx);
 				termRanges.push({
 					content: term,
 					range: {
 						start: { 
-							line: literalRange.start.line, 
-							character: literalRange.start.character + termIdx 
+							line: formulaRange.start.line, 
+							character: formulaRange.start.character + termIdx 
 						},
 						end: { 
-							line: literalRange.start.line, 
-							character: literalRange.start.character + termIdx + term.name.length 
+							line: formulaRange.start.line, 
+							character: formulaRange.start.character + termIdx + term.name.length 
 						}
 					}
 				});

@@ -32,6 +32,18 @@ export class Formula {
 		return this.elements.map(el => el.name).join(' ');
 	}
 
+	public get terms(): Term[] {
+		return this.elements
+		.filter(el => el.elementKind === ElementKind.Term)
+		.map(term => term as Term);
+	}
+
+	public get surroundings(): Surrounding[] {
+		return this.elements
+		.filter(el => el.elementKind === ElementKind.Surrounding)
+		.map(s => s as Surrounding);
+	}
+
 	constructor(type: Type, elements: FormulaElement[]) {
 		this.type = type;
 		this.elements = elements;

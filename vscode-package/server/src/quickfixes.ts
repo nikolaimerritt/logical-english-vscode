@@ -9,12 +9,13 @@ import {
 	templatesInDocument, 
 	clausesInDocument, 
 	ContentRange, 
-	literalsInClause, 
+	literalsInClause as formulasInClause, 
 	typeTreeInDocument 
 } from './parsing';
 
 import { debugOnStart } from './diagnostics';
 import { Term } from './formula';
+import { parseFormulaFromTemplate } from './term-extractor';
 
 // adapted from https://github.com/YuanboXue-Amber/endevor-scl-support/blob/master/server/src/CodeActionProvider.ts
 
@@ -27,7 +28,7 @@ function literalWithNoTemplateFixes(text: string, params: CodeActionParams): Cod
 	const templates = templatesInDocument(text);
 	const typeTree = typeTreeInDocument(text);
 	const literalsWithNoTemplate = literalsInDocument(text)
-	.filter(literal => !templates.some(template => template.matchesLiteral(literal.content)));
+	.filter(literal => !templates.some(template => template.matchesFormula(literal.content)));
 	
 	const templatesRange = sectionWithHeader(text, 'templates')?.range;
 	if (templatesRange === undefined)
@@ -93,13 +94,13 @@ function clauseContainingLiteral(document: string, literal: ContentRange<string>
 
 function termsInClause(templates: Template[], clause: ContentRange<string>): Term[] {
 	let terms: Term[] = [];
-	const literals = literalsInClause(clause);
+	const formulas = formulasInClause(clause);
 
-	for (const { content: literal } of literals) {
+	for (const { content: formula } of formulas) {
 		// const template = templates.find(t => t.matchesLiteral(literal));
-		const template = Template.findBestMatch(templates, literal);
+		const template = Template.findBestMatch(templates, formula);
 		if (template !== undefined) 
-			terms = terms.concat(template.parseTerms(literal));
+			terms = terms.concat(parseFormulaFromTemplate(template, formula).terms);
 	}
 
 	return terms;

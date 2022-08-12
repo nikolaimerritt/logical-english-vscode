@@ -61,7 +61,7 @@ function literalHasNoTemplateDiags(text: string): Diagnostic[] {
 
 	const diagnostics: Diagnostic[] = [];	
 	for (const { content: literal, range } of literalsInDocument(text))
-		if (!templates.some(template => template.matchesLiteral(literal)))
+		if (!templates.some(template => template.matchesFormula(literal)))
 			diagnostics.push({
 				severity: DiagnosticSeverity.Warning,
 				range,
