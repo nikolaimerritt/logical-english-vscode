@@ -46,7 +46,7 @@ suite('Template.fromString()', () => {
 
 		assert.ok(
 			template.surroundings.length === expectedSurroundings.length
-			&& template.surroundings.every(({ phrase }, idx) => phrase === expectedSurroundings[idx])
+			&& template.surroundings.every(({ name: phrase }, idx) => phrase === expectedSurroundings[idx])
 		);
 	});
 });

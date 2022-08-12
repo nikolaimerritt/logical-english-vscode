@@ -5,18 +5,21 @@ export enum ElementKind {
 	Term
 }
 
+export type TemplateElement = Surrounding | Type;
+
+
 export class Surrounding {
-	public readonly kind = ElementKind.Surrounding;
-	public readonly phrase: string;
+	public readonly elementKind = ElementKind.Surrounding;
+	public readonly name: string;
 
 	constructor(name: string) {
-		this.phrase = name;
+		this.name = name;
 	}
 }
 
 
 export class Type {
-	public readonly kind = ElementKind.Type;
+	public readonly elementKind = ElementKind.Type;
 	public readonly name: string;
 	private readonly _subtypes: Type[] = [];
 
@@ -36,19 +39,3 @@ export class Type {
 		else throw new Error(`Type ${this.name} cannot set itself as a sub-type.`);
 	}
 }
-
-
-export class Term {
-	public readonly kind = ElementKind.Term;
-	public readonly name: string;
-	public readonly type: Type;
-
-	constructor(name: string, type: Type) {
-		this.name = name;
-		this.type = type;
-	}
-}
-
-
-export type TemplateElement = Surrounding | Type;
-export type LiteralElement = Surrounding | Term;

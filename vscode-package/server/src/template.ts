@@ -1,6 +1,7 @@
 import { deepCopy, removeBlanks, removeFirst, regexSanitise, maximal, sortBy, sanitiseLiteral } from './utils';
-import { TypeTree } from './type-tree';
-import { Term, Type, TemplateElement, Surrounding, ElementKind, LiteralElement } from './element';
+import { dummyType, TypeTree } from './type-tree';
+import { Type, TemplateElement, Surrounding, ElementKind } from './element';
+import { Atom, Formula, FormulaElement, Term } from './formula';
 
 
 
@@ -14,14 +15,14 @@ export class Template {
 
 	public get surroundings(): Surrounding[] {
 		return this.elements
-		.filter(el => el.kind === ElementKind.Surrounding)
+		.filter(el => el.elementKind === ElementKind.Surrounding)
 		.map(el => el as Surrounding);
 	} 
 
 
 	public get types(): Type[] {
 		return this.elements
-		.filter(el => el.kind === ElementKind.Type)
+		.filter(el => el.elementKind === ElementKind.Type)
 		.map(el => el as Type);
 	}
 
@@ -60,12 +61,12 @@ export class Template {
 	}
 
 
-	public static fromLiteral(typeTree: TypeTree, literal: string, terms: Term[]): Template {
-		literal = literal.replace('.', '');
-		terms = terms.filter(t => t.name.trim().length > 0);
+	public static fromFormula(typeTree: TypeTree, formula: string, terms: Term[]): Template {
+		formula = formula.replace('.', '');
+		// terms = terms.filter(t => t.name.trim().length > 0);
 		const sanitisedTermNames = terms.map(t => regexSanitise(t.name));
 		const argumentBlockRegex = new RegExp(`(?:(${sanitisedTermNames.join('|')}))`, 'g');
-		const elementStrings = removeBlanks(literal.split(argumentBlockRegex));
+		const elementStrings = removeBlanks(formula.split(argumentBlockRegex));
 
 		let variableIdx = 0;
 		const elements: TemplateElement[] = [];
@@ -95,8 +96,8 @@ export class Template {
 		// assumes that literals all conform to same template
 		// takes first literal, compares against predicate words to construct a template
 		const termNames = Template.termNamesFromLiteral(literals[0], predicateWords);
-		const terms = termNames.map(t => new Term(t, typeTree.getType(t)));
-		const template = Template.fromLiteral(typeTree, literals[0], terms);
+		const terms = termNames.map(t => new Atom(t, typeTree.getType(t)));
+		const template = Template.fromFormula(typeTree, literals[0], terms);
 
 		// now check that all literals match the template
 		if (literals.some(literal => !template.matchesLiteral(literal)))
@@ -108,9 +109,9 @@ export class Template {
 
 	public toString(): string {
 		const elementStrings: string[] = this.elements.map(el => {
-			switch (el.kind) {
+			switch (el.elementKind) {
 				case ElementKind.Surrounding:
-					return el.phrase;
+					return el.name;
 				case ElementKind.Type:
 					return `*${el.name}*`;
 			}
@@ -122,12 +123,12 @@ export class Template {
 		let snippet = '';
 		let placeholderCount = 0;
 		for (const el of this.elements) {
-			if (el.kind === ElementKind.Type) {
+			if (el.elementKind === ElementKind.Type) {
 				placeholderCount++;
 				snippet += '${' + placeholderCount + ':' + el.name + '}';
 			} 
 			else
-				snippet += el.phrase;
+				snippet += el.name;
 			
 			snippet += ' ';
 		}
@@ -143,8 +144,8 @@ export class Template {
 		const newElements: TemplateElement[] = [];
 
 		for (const el of this.elements) {
-			if (el.kind === ElementKind.Surrounding && variableRegex.test(term.name)) {
-				const elementStrings = el.phrase.split(variableRegex);
+			if (el.elementKind === ElementKind.Surrounding && variableRegex.test(term.name)) {
+				const elementStrings = el.name.split(variableRegex);
 				for (let elString of elementStrings) {
 					elString = elString.trim();
 					if (elString.length > 0) {
@@ -226,24 +227,24 @@ export class Template {
 	}
 
 
-	public parseElements(literal: string): LiteralElement[] {
-		literal = sanitiseLiteral(literal);
-		const elements: LiteralElement[] = [];
-		let typeOfLeftoversIdx = this.elements[0].kind === ElementKind.Type
+	public parseFormula(formula: string): Formula {
+		formula = sanitiseLiteral(formula);
+		const elements: FormulaElement[] = [];
+		let typeOfLeftoversIdx = this.elements[0].elementKind === ElementKind.Type
 			? 0
 			: -1;
 		
 		for (let i = 0; i < this.elements.length; i++) {
 			const join = this.elements[i];
-			if (join.kind === ElementKind.Surrounding) {
-				let phraseIdx = literal.indexOf(join.phrase);
-				let phrase = join.phrase;
+			if (join.elementKind === ElementKind.Surrounding) {
+				let phraseIdx = formula.indexOf(join.name);
+				let phrase = join.name;
 				if (phraseIdx === -1) {
-					const startOfPhraseIdx = [...Array(literal.length).keys()]
-					.find(i => join.phrase.startsWith(literal.slice(i, )));
+					const startOfPhraseIdx = [...Array(formula.length).keys()]
+					.find(i => join.name.startsWith(formula.slice(i, )));
 					if (startOfPhraseIdx !== undefined) {
 						phraseIdx = startOfPhraseIdx;
-						phrase = literal.slice(phraseIdx, );
+						phrase = formula.slice(phraseIdx, );
 					}
 				}
 
@@ -254,36 +255,38 @@ export class Template {
 
 				if (i > 0 && phraseIdx > 0) {
 					const type = this.elements[i - 1];
-					if (type.kind === ElementKind.Type) {
-						const termName = sanitiseLiteral(literal.slice(0, phraseIdx));
-						elements.push(new Term(termName, type));
+					if (type.elementKind === ElementKind.Type) {
+						const termName = sanitiseLiteral(formula.slice(0, phraseIdx));
+						elements.push(new Atom(termName, type));
 					}
 				}
 
 				elements.push(new Surrounding(phrase));
-				literal = sanitiseLiteral(literal.slice(phraseIdx + phrase.length + 1, ));
+				formula = sanitiseLiteral(formula.slice(phraseIdx + phrase.length + 1, ));
 			}
 		}
 
-		if (literal.length > 0 && typeOfLeftoversIdx !== -1 && typeOfLeftoversIdx < this.elements.length) {
+		if (formula.length > 0 && typeOfLeftoversIdx !== -1 && typeOfLeftoversIdx < this.elements.length) {
 			const type = this.elements[typeOfLeftoversIdx];
-			if (type.kind === ElementKind.Type)
-				elements.push(new Term(sanitiseLiteral(literal), type));
+			if (type.elementKind === ElementKind.Type)
+				elements.push(new Atom(sanitiseLiteral(formula), type));
 		}
-		return elements;
+		return new Formula(dummyType, elements);
 	}
 
 
-	public parseTerms(literal: string): Term[] {
-		return this.parseElements(literal)
-		.filter(el => el.kind === ElementKind.Term)
+	public parseTerms(formula: string): Term[] {
+		return this.parseFormula(formula)
+		.elements
+		.filter(el => el.elementKind === ElementKind.Term)
 		.map(term => term as Term);
 	}
 
-	public parseSurroundings(literal: string): Surrounding[] {
-		return this.parseElements(literal)
-		.filter(el => el.kind === ElementKind.Surrounding) 
-		.map(join => join as Surrounding);
+	public parseSurroundings(formula: string): Surrounding[] {
+		return this.parseFormula(formula)
+		.elements
+		.filter(el => el.elementKind === ElementKind.Surrounding) 
+		.map(s => s as Surrounding);
 	}
 
 
@@ -296,7 +299,7 @@ export class Template {
 			return false;
 		
 		for (let i = 0; i < joins.length; i++) {
-			if (joins[i].phrase !== otherJoins[i].phrase)
+			if (joins[i].name !== otherJoins[i].name)
 				return false;
 		}
 
@@ -311,7 +314,7 @@ export class Template {
 	// wants to [wants to see] --> score = 10
 	public matchScore(literal: string): number {
 		return this.parseSurroundings(literal)
-		.map(surrounding => surrounding.phrase)
+		.map(surrounding => surrounding.name)
 		.join(' ')
 		.length;
 	}
@@ -319,20 +322,21 @@ export class Template {
 	// *an A* 		really likes 	*a B* 	with value 	*a C*
 	// fred bloggs	really likes 	apples	with val
 	// output = fred bloggs really likes apples with value *a C*
-	public substituteTerms(typeTree: TypeTree, literal: string): Template {
-		const terms = this.parseTerms(literal);
+	public substituteTerms(typeTree: TypeTree, formula: string): Template {
+		const terms = this.parseTerms(formula);
 		const elements: TemplateElement[] = [];
-		this.elements.forEach(el => {
-			if (el.kind === ElementKind.Surrounding) 
+		for (const el of this.elements) {
+			if (el.elementKind === ElementKind.Surrounding) 
 				elements.push(el);
-			else if (el.kind === ElementKind.Type) {
+
+			else {
 				if (terms.length > 0) {
 					elements.push(new Surrounding(terms[0].name));
 					terms.shift(); // remove first term
 				} else 
 					elements.push(el);
 			}
-		});
+		}
 
 		return new Template(elements);
 	}

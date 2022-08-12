@@ -1,6 +1,6 @@
 import { Position, Range } from 'vscode-languageserver';
 import { Template } from './template';
-import { Term } from './element';
+import { Term } from './formula';
 import { TypeTree } from './type-tree';
 import { defaultTemplateStrings } from './default-templates';
 import { sanitiseLiteral } from './utils';

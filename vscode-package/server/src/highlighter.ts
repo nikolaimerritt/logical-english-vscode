@@ -49,9 +49,9 @@ function termInLiteralTokens(text: string): TokenDetails[] {
     const tokens: TokenDetails[] = [];
     
     // eslint-disable-next-line prefer-const
-    for (let { content: literal, range } of literalsInDocument(text)) {
+    for (let { content: formula, range } of literalsInDocument(text)) {
         // const template = templates.find(template => template.matchesLiteral(literal));
-        const template = Template.findBestMatch(templates, literal);
+        const template = Template.findBestMatch(templates, formula);
         
         // if (template !== undefined) {
         //     const terms = template.parseTerms(literal);
@@ -73,23 +73,19 @@ function termInLiteralTokens(text: string): TokenDetails[] {
         // }
         if (template !== undefined) {
             let elIdx = 0;
-            for (const el of template.parseElements(literal)) {
-                const elString = el.kind === ElementKind.Surrounding
-                    ? el.phrase
-                    : el.name;
-                
-                elIdx = literal.indexOf(elString, elIdx);
+            for (const el of template.parseFormula(formula).elements) {
+                elIdx = formula.indexOf(el.name, elIdx);
 
-                if (el.kind === ElementKind.Term) {
+                if (el.elementKind === ElementKind.Term) {
                     tokens.push({
                         line: range.start.line,
                         char: range.start.character + elIdx,
-                        length: elString.length,
+                        length: el.name.length,
                         tokenTypeName: 'variable',
                         tokenModifierName: null
                     });
                 }
-                elIdx += elString.length;
+                elIdx += el.name.length;
             }
         }
     }

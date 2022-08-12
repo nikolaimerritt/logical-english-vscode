@@ -1,6 +1,7 @@
 import { Template } from './template';
 import { Type } from './element';
 
+export const dummyType = new Type('dummy', []);
 
 export class TypeTree {
 	private readonly root: Type;

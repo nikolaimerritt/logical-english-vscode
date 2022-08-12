@@ -14,7 +14,7 @@ import {
 } from './parsing';
 
 import { debugOnStart } from './diagnostics';
-import { Term } from './element';
+import { Term } from './formula';
 
 // adapted from https://github.com/YuanboXue-Amber/endevor-scl-support/blob/master/server/src/CodeActionProvider.ts
 
