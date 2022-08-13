@@ -11,11 +11,11 @@ import {
 
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { Template } from './template';
-import { literalsInDocument as formulasInDocument, templatesInDocument } from './parsing';
+import { formulasInDocument as formulasInDocument, templatesInDocument } from './parsing';
 import { ignoreComments } from './utils';
 import { ElementKind } from './element';
-import { parseFormula, parseFormulaFromTemplate } from './term-extractor';
 import { Formula, TermKind } from './formula';
+import { isTemplateless, Schema } from './schema';
 
 
 export const tokenTypes = ['variable', 'class', 'interface', 'keyword'];
@@ -34,7 +34,8 @@ export function semanticTokens(textWithComments: string): SemanticTokens {
     tokens.push(...specialCommentTokens(textWithComments));
 
     const textWithoutComments = ignoreComments(textWithComments);
-    tokens.push(...tokensFromAllTerms(textWithComments));
+    const schema = Schema.fromDocument(textWithoutComments);
+    tokens.push(...tokensFromAllTerms(schema, textWithoutComments));
 
     const builder = new SemanticTokensBuilder();
     for (const token of tokens) {
@@ -46,12 +47,11 @@ export function semanticTokens(textWithComments: string): SemanticTokens {
 }
 
 
-function tokensFromAllTerms(text: string): TokenDetails[] {
-    const templates = templatesInDocument(text);
+function tokensFromAllTerms(schema: Schema, document: string): TokenDetails[] {
     const tokens: TokenDetails[] = [];
     
     // eslint-disable-next-line prefer-const
-    for (let { content: formulaString, range } of formulasInDocument(text)) {
+    for (let { content: formula, range } of formulasInDocument(schema, document)) {
         // let elIdx = 0;
         // for (const el of parseFormula(templates, formula).elements) {
         //     elIdx = formula.indexOf(el.name, elIdx);
@@ -67,14 +67,15 @@ function tokensFromAllTerms(text: string): TokenDetails[] {
         //     }
         //     elIdx += el.name.length;
         // }
-        const formula = parseFormula(templates, formulaString);
-        const atomTokens = atomsInFormulaTokens(
-            formula,
-            range.start.line, 
-            range.start.character
-        );
+        if (!isTemplateless(formula)) {
+            const atomTokens = atomsInFormulaTokens(
+                formula,
+                range.start.line, 
+                range.start.character
+            );
 
-        tokens.push(...atomTokens);
+            tokens.push(...atomTokens);
+        }
     }
 
     return tokens;

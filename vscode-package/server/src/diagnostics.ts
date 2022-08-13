@@ -6,7 +6,7 @@ import {
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { 
 	templatesInDocument, 
-	literalsInDocument, 
+	formulasInDocument, 
 	clausesInDocument, 
 	termsInClause,
 	typeTreeInDocument 
@@ -15,6 +15,7 @@ import { ignoreComments } from './utils';
 import { Template } from './template';
 import { Type } from './element';
 import { TypeTree } from './type-tree';
+import { isTemplateless, Schema } from './schema';
 
 export interface ExampleSettings {
 	maxNumberOfProblems: number;
@@ -27,19 +28,21 @@ export const globalSettings: ExampleSettings = {
 export const literalHasNoTemplateMessage = "Literal has no template.";
 export const clauseHasMisalignedConnectivesMessage = 'Clause has misaligned connectives.';
 
-export function diagnostics(text: string): Diagnostic[] {	
-	debugOnStart();
+export function diagnostics(document: string): Diagnostic[] {	
+	// debugOnStart();
+
+	const schema = Schema.fromDocument(document);
 	const typeCheckingRegex = /^.*(%type checking:? on)\s*$/gm;
-	const typeChecking = typeCheckingRegex.test(text);
-	text = ignoreComments(text);
+	const typeChecking = typeCheckingRegex.test(document);
+	document = ignoreComments(document);
 
 	const diags = [];
-	diags.push(... literalHasNoTemplateDiags(text));
-	diags.push(...misalignedConnectivesDiags(text));
+	diags.push(... literalHasNoTemplateDiags(schema, document));
+	diags.push(...misalignedConnectivesDiags(document));
 
 
 	if (typeChecking) 
-		diags.push(...typeMismatchDiags(text));
+		diags.push(...typeMismatchDiags(schema, document));
 
 	return diags;
 }
@@ -56,12 +59,10 @@ export function debugOnStart() {
 
 
 // refactor to export function text -> literals with no template
-function literalHasNoTemplateDiags(text: string): Diagnostic[] {
-	const templates = templatesInDocument(text);
-
+function literalHasNoTemplateDiags(schema: Schema, text: string): Diagnostic[] {
 	const diagnostics: Diagnostic[] = [];	
-	for (const { content: literal, range } of literalsInDocument(text))
-		if (!templates.some(template => template.matchesFormula(literal)))
+	for (const { content: formula, range } of formulasInDocument(schema, text))
+		if (isTemplateless(formula))
 			diagnostics.push({
 				severity: DiagnosticSeverity.Warning,
 				range,
@@ -88,12 +89,11 @@ function misalignedConnectivesDiags(text: string): Diagnostic[] {
 	return diagnostics;
 }
 
-function typeMismatchDiags(text: string): Diagnostic[] {
+function typeMismatchDiags(schema: Schema, text: string): Diagnostic[] {
 	const diagnostics: Diagnostic[] = [];
-	const templates = templatesInDocument(text);
 
 	for (const clause of clausesInDocument(text)) {
-		const terms = termsInClause(templates, clause);
+		const terms = termsInClause(schema, clause);
 		for (let i = 0; i < terms.length; i++) {
 			for (let j = i + 1; j < terms.length; j++) {
 				if (terms[i].content.name === terms[j].content.name 

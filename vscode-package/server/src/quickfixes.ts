@@ -4,33 +4,40 @@ import { Template } from './template';
 import { literalHasNoTemplateMessage } from './diagnostics';
 import { ignoreComments } from './utils';
 import { 
-	literalsInDocument, 
+	formulasInDocument, 
 	sectionWithHeader, 
 	templatesInDocument, 
 	clausesInDocument, 
 	ContentRange, 
-	literalsInClause as formulasInClause, 
+	termsInClause,
 	typeTreeInDocument 
 } from './parsing';
 
 import { debugOnStart } from './diagnostics';
 import { Term } from './formula';
-import { parseFormulaFromTemplate } from './term-extractor';
+import { isTemplateless, Schema, TemplatelessFormula } from './schema';
 
 // adapted from https://github.com/YuanboXue-Amber/endevor-scl-support/blob/master/server/src/CodeActionProvider.ts
 
-export function quickfixes(text: string, params: CodeActionParams): CodeAction[] {	
-	text = ignoreComments(text);
-	return literalWithNoTemplateFixes(text, params);
+export function quickfixes(document: string, params: CodeActionParams): CodeAction[] {	
+	document = ignoreComments(document);
+	const schema = Schema.fromDocument(document);
+	return literalWithNoTemplateFixes(params, schema, document);
 }
 
-function literalWithNoTemplateFixes(text: string, params: CodeActionParams): CodeAction[] {
-	const templates = templatesInDocument(text);
-	const typeTree = typeTreeInDocument(text);
-	const literalsWithNoTemplate = literalsInDocument(text)
-	.filter(literal => !templates.some(template => template.matchesFormula(literal.content)));
+function literalWithNoTemplateFixes(params: CodeActionParams, schema: Schema, document: string): CodeAction[] {
+	const templates = templatesInDocument(document);
+	const typeTree = typeTreeInDocument(document);
+	const formulasWithNoTemplate: ContentRange<TemplatelessFormula>[] = formulasInDocument(schema, document)
+	.filter(({content: formula}) => isTemplateless(formula))
+	.map(
+		(contentRange) => ({ 
+			content: contentRange.content as TemplatelessFormula,
+			range: contentRange.range 
+		})
+	);
 	
-	const templatesRange = sectionWithHeader(text, 'templates')?.range;
+	const templatesRange = sectionWithHeader(document, 'templates')?.range;
 	if (templatesRange === undefined)
 		return [];
 	
@@ -40,16 +47,16 @@ function literalWithNoTemplateFixes(text: string, params: CodeActionParams): Cod
 	};
 
 
-	let generatedTemplate = Template.fromLGG(typeTree, literalsWithNoTemplate.map(lit => lit.content));
+	let generatedTemplate = Template.fromLGG(typeTree, formulasWithNoTemplate.map(f => f.content));
 	if (generatedTemplate === undefined)
 		return [];
 
 	
 	// trying to add every variable in the clauses containing the literals, to the template
-	for (const literal of literalsWithNoTemplate) {
-		const clause = clauseContainingLiteral(text, literal);
+	for (const formula of formulasWithNoTemplate) {
+		const clause = clauseContainingLiteral(document, formula);
 		if (clause !== undefined) {
-			for (const term of termsInClause(templates, clause))
+			for (const { content: term } of termsInClause(schema, clause))
 				generatedTemplate = generatedTemplate.withVariable(term);
 		}
 	}
@@ -92,16 +99,16 @@ function clauseContainingLiteral(document: string, literal: ContentRange<string>
 }
 
 
-function termsInClause(templates: Template[], clause: ContentRange<string>): Term[] {
-	let terms: Term[] = [];
-	const formulas = formulasInClause(clause);
+// function termsInClause(templates: Template[], clause: ContentRange<string>): Term[] {
+// 	let terms: Term[] = [];
+// 	const formulas = formulasInClause(clause);
 
-	for (const { content: formula } of formulas) {
-		// const template = templates.find(t => t.matchesLiteral(literal));
-		const template = Template.findBestMatch(templates, formula);
-		if (template !== undefined) 
-			terms = terms.concat(parseFormulaFromTemplate(template, formula).terms);
-	}
+// 	for (const { content: formula } of formulas) {
+// 		// const template = templates.find(t => t.matchesLiteral(literal));
+// 		const template = Template.findBestMatch(templates, formula);
+// 		if (template !== undefined) 
+// 			terms = terms.concat(parseFormulaFromTemplate(template, formula).terms);
+// 	}
 
-	return terms;
-}
+// 	return terms;
+// }

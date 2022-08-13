@@ -1,16 +1,17 @@
 import { Position, Range } from 'vscode-languageserver';
 import { Template } from './template';
-import { Term } from './formula';
+import { Formula, Term } from './formula';
 import { TypeTree } from './type-tree';
 import { defaultTemplateStrings } from './default-templates';
 import { sanitiseLiteral } from './utils';
-import { parseFormulaFromTemplate } from './term-extractor';
+import { isTemplateless, Schema, TemplatelessFormula } from './schema';
 
 
 export type ContentRange<T> = {
 	content: T,
 	range: Range
 }
+
 
 function sectionRange(text: string, headerPredicate: (header: string) => boolean): ContentRange<string[]> | undefined {
 	const lines = text.split('\n');
@@ -173,58 +174,56 @@ export function connectivesRegex(): RegExp {
 }
 
 
-export function literalsInClause(clause: ContentRange<string>): ContentRange<string>[] {
+function formulasInClause(schema: Schema, clause: ContentRange<string>): ContentRange<Formula | TemplatelessFormula>[] {
 	const lines = clause.content.split('\n');
-	const literalsWithRanges: ContentRange<string>[] = [];
+	const formulasWithRanges: ContentRange<Formula | TemplatelessFormula>[] = [];
 
 	for (let lineOffset = 0; lineOffset < lines.length; lineOffset++) {
 		const lineNumber = clause.range.start.line + lineOffset;
-		const literalsInLine = lines[lineOffset].split(connectivesRegex())
-		.map(lit => lit.trim())
+		const formulasInLine = lines[lineOffset].split(connectivesRegex())
+		.map(sanitiseLiteral)
 		.filter(lit => lit.length > 0);
 
-		literalsInLine.forEach(lit => {
-			lit = sanitiseLiteral(lit);
+		formulasInLine.forEach(formula => {
 			const range: Range = {
 				start: {
 					line: lineNumber,
-					character: lines[lineOffset].indexOf(lit)
+					character: lines[lineOffset].indexOf(formula)
 				},
 				end: {
 					line: lineNumber,
-					character: lines[lineOffset].indexOf(lit) + lit.length
+					character: lines[lineOffset].indexOf(formula) + formula.length
 				}
 			};
-			literalsWithRanges.push({
-				content: lit,
+			formulasWithRanges.push({
+				content: schema.parseFormula(formula),
 				range
 			});
 		});
 	}
 
-	return literalsWithRanges;
+	return formulasWithRanges;
 }
 
 
 
-export function literalsInDocument(text: string): ContentRange<string>[] {
+export function formulasInDocument(schema: Schema, text: string): ContentRange<Formula | TemplatelessFormula>[] {
 	const clauses = clausesInDocument(text);
 	return clauses
-	.flatMap(clause => literalsInClause(clause));
+	.flatMap(clause => formulasInClause(schema, clause));
 }
 
 
-export function termsInClause(templates: Template[], clause: ContentRange<string>): ContentRange<Term>[] {
+export function termsInClause(schema: Schema, clause: ContentRange<string>): ContentRange<Term>[] {
 	const termRanges: ContentRange<Term>[] = [];
 
-	for (const { content: formula, range: formulaRange } of literalsInClause(clause)) {
+	for (const { content: formula, range: formulaRange } of formulasInClause(schema, clause)) {
 		// const template = templates.find(t => t.matchesLiteral(literal));
-		const template = Template.findBestMatch(templates, formula);
-		if (template !== undefined) {
+		if (!isTemplateless(formula)) {
 			let termIdx = 0;
 
-			for (const term of parseFormulaFromTemplate(template, formula).terms) {
-				termIdx = formula.indexOf(term.name, termIdx);
+			for (const term of formula.terms) {
+				termIdx = formula.name.indexOf(term.name, termIdx);
 				termRanges.push({
 					content: term,
 					range: {

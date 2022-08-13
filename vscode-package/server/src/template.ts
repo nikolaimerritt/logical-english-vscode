@@ -2,7 +2,6 @@ import { deepCopy, removeBlanks, removeFirst, regexSanitise, maximal, sortBy, sa
 import { dummyType, TypeTree } from './type-tree';
 import { Type, TemplateElement, Surrounding, ElementKind } from './element';
 import { Atom, Formula, FormulaElement, Term } from './formula';
-import { parseFormulaFromTemplate } from './term-extractor';
 
 
 
@@ -255,7 +254,7 @@ export class Template {
 	// TODO: use clause to see if the types of literal's terms match with this template
 	public matchesFormula(formula: string): boolean {
 		const surroundings = this.surroundings;
-		const otherSurroundings = parseFormulaFromTemplate(this, formula).surroundings;
+		const otherSurroundings = this.parseFormula(formula).surroundings;
 
 		if (surroundings.length !== otherSurroundings.length)
 			return false;
@@ -275,7 +274,7 @@ export class Template {
 	// fred bloggs [wants to see] the eiffel tower [at] --> score = 12
 	// wants to [wants to see] --> score = 10
 	public matchScore(formula: string): number {
-		return parseFormulaFromTemplate(this, formula)
+		return this.parseFormula(formula)
 		.surroundings
 		.map(surrounding => surrounding.name)
 		.join(' ')
@@ -286,7 +285,7 @@ export class Template {
 	// fred bloggs	really likes 	apples	with val
 	// output = fred bloggs really likes apples with value *a C*
 	public substituteTerms(typeTree: TypeTree, formula: string): Template {
-		const terms = parseFormulaFromTemplate(this, formula).terms;
+		const terms = this.parseFormula(formula).terms;
 
 		const elements: TemplateElement[] = [];
 		for (const el of this.elements) {
@@ -309,18 +308,81 @@ export class Template {
 	// 	- matches the literal
 	// 	- then, has the most amount of variables
 	//  - then, has the longest surroundings
-	public static findBestMatch(templates: Template[], formula: string): Template | undefined {
-		const subformulaPattern = /(?<= that ).*/g;
-		if (subformulaPattern.test(formula))
-			formula = formula.replace(subformulaPattern, '_');
+	// public static findBestMatch(templates: Template[], formula: string): Template | undefined {
+	// 	const subformulaPattern = /(?<= that ).*/g;
+	// 	if (subformulaPattern.test(formula))
+	// 		formula = formula.replace(subformulaPattern, '_');
 		
-		const candidates = templates.filter(t => t.matchesFormula(formula));
+	// 	const candidates = templates.filter(t => t.matchesFormula(formula));
 
-		if (candidates.length === 0)
-			return undefined;
+	// 	if (candidates.length === 0)
+	// 		return undefined;
 
-		const maxVariableCount = Math.max(...candidates.map(t => t.types.length));
-		const candidatesWithMaxVars = candidates.filter(t => t.types.length === maxVariableCount);
-		return maximal(candidatesWithMaxVars, t => t.surroundings.join(' ').length);
+	// 	const maxVariableCount = Math.max(...candidates.map(t => t.types.length));
+	// 	const candidatesWithMaxVars = candidates.filter(t => t.types.length === maxVariableCount);
+	// 	return maximal(candidatesWithMaxVars, t => t.surroundings.join(' ').length);
+	// }
+
+
+	public parseFormula(formula: string): Formula {
+		const elements = this.parseElements(formula);
+		return new Formula(dummyType, elements);
+	}
+
+	private parseElements(formula: string): FormulaElement[] {
+		formula = sanitiseLiteral(formula);
+		const elements: FormulaElement[] = [];
+		let lastTypeIdx = this.elements[0].elementKind === ElementKind.Type
+			? 0
+			: -1;
+		
+		for (let i = 0; i < this.elements.length; i++) {
+			const join = this.elements[i];
+			if (join.elementKind === ElementKind.Surrounding) {
+				let phraseIdx = formula.indexOf(join.name);
+				let phrase = join.name;
+				if (phraseIdx === -1) {
+					const startOfPhraseIdx = [...Array(formula.length).keys()]
+					.find(i => join.name.startsWith(formula.slice(i, )));
+					if (startOfPhraseIdx !== undefined) {
+						phraseIdx = startOfPhraseIdx;
+						phrase = formula.slice(phraseIdx, );
+					}
+				}
+
+				if (phraseIdx === -1)
+					break;
+				
+				lastTypeIdx = i + 1;
+
+				if (i > 0 && phraseIdx > 0) {
+					const type = this.elements[i - 1];
+					if (type.elementKind === ElementKind.Type) {
+						const termName = sanitiseLiteral(formula.slice(0, phraseIdx));
+						elements.push(new Atom(termName, type));
+					}
+				}
+
+				elements.push(new Surrounding(phrase));
+				formula = sanitiseLiteral(formula.slice(phraseIdx + phrase.length + 1, ));
+			}
+		}
+
+		if (formula.length > 0 && lastTypeIdx >= 0 && lastTypeIdx < this.elements.length) {
+			const type = this.elements[lastTypeIdx];
+			if (type.elementKind === ElementKind.Type) {
+				// if (
+				// 	lastTypeIdx - 1 >= 0
+				// 	&& template.elements[lastTypeIdx - 1].elementKind === ElementKind.Surrounding
+				// 	&& template.elements[lastTypeIdx - 1].name.endsWith(' that')
+				// ) {
+				// 	const formulaElements = this.extractFormulaElements(formula);
+				// 	elements.push(new Formula(type, formulaElements));
+				// }
+				// else 
+					elements.push(new Atom(sanitiseLiteral(formula), type));
+			}
+		}
+		return elements;
 	}
 }
