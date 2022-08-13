@@ -55,7 +55,7 @@ function literalCompletion(text: string, params: TextDocumentPositionParams): Co
 	.slice(Math.max(templates.length - maxCompletions, 0));
 
 	return bestTemplatesWithScores.map(([template, score]) => {
-		const templateWithMissingTerms = template.substituteTerms(typeTree, literal);
+		const templateWithMissingTerms = template.substituteTerms(literal);
 		const textEdit = TextEdit.replace(literalToEndOfLine, templateWithMissingTerms.toSnippet());
 		const completion: CompletionItem = {
 			label: templateWithMissingTerms.toString(),

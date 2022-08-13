@@ -1,7 +1,7 @@
 import { deepCopy, removeBlanks, removeFirst, regexSanitise, maximal, sortBy, sanitiseLiteral } from './utils';
 import { dummyType, TypeTree } from './type-tree';
 import { Type, TemplateElement, Surrounding, ElementKind } from './element';
-import { Atom, Formula, FormulaElement, Term } from './formula';
+import { Atom, Formula, FormulaElement, Term, TermKind } from './formula';
 
 
 
@@ -26,9 +26,9 @@ export class Template {
 		.map(el => el as Type);
 	}
 
-	public get allElements(): TemplateElement[] {
-		return this.elements.map(x => x); // shallow copy
-	}
+	// public get allElements(): TemplateElement[] {
+	// 	return this.elements.map(x => x); // shallow copy
+	// }
 
 
 	public static fromString(typeTree: TypeTree, templateString: string, useExistingVariableNames = true): Template {
@@ -61,46 +61,85 @@ export class Template {
 	}
 
 
-	public static fromFormula(typeTree: TypeTree, formula: string, terms: Term[]): Template {
-		formula = formula.replace('.', '');
-		// terms = terms.filter(t => t.name.trim().length > 0);
-		const sanitisedTermNames = terms.map(t => regexSanitise(t.name));
-		const argumentBlockRegex = new RegExp(`(?:(${sanitisedTermNames.join('|')}))`, 'g');
-		const elementStrings = removeBlanks(formula.split(argumentBlockRegex));
+	// public static fromFormula(formula: string, terms: Term[]): Template {
+	// 	formula = sanitiseLiteral(formula);
+	// 	const sanitisedTermNames = terms.map(t => regexSanitise(t.name));
+	// 	const argumentBlockRegex = new RegExp(`(?:(${sanitisedTermNames.join('|')}))`, 'g');
+	// 	const elementStrings = removeBlanks(formula.split(argumentBlockRegex));
 
-		let variableIdx = 0;
-		const elements: TemplateElement[] = [];
+	// 	const elements: TemplateElement[] = [];
 
-		for (const el of elementStrings) {
-			if (terms.some(t => t.name === el)) {
-				const type = typeTree.getType(Template.variableName(variableIdx++));
-				elements.push(type);
-			}
-			else 
-				elements.push(new Surrounding(el));
-		}
+	// 	for (const el of elementStrings) {
+	// 		const term = terms.find(term => term.name === el);
+	// 		if (term === undefined)
+	// 			elements.push(new Surrounding(el));
+	// 		else 
+	// 			elements.push(term.type);
+	// 	}
 
-		return new Template(elements);
-	}
+	// 	return new Template(elements);
+	// }
 
-	public static fromLGG(typeTree: TypeTree, literals: string[]): Template | undefined {
-		if (literals.length === 0)
+	public static fromLGG(formulas: string[]): Template | undefined {
+		if (formulas.length === 0)
 			return undefined;
 
-		if (literals.length === 1)
-			return new Template([ new Surrounding(literals[0]) ]);
+		if (formulas.length === 1)
+			return new Template([ new Surrounding(formulas[0]) ]);
 
-		const wordsFromEachLiteral = literals.map(literal => sanitiseLiteral(literal).split(/\s+/g));
-		const predicateWords = Template.predicateWordsFromLiterals(wordsFromEachLiteral);
+		const wordsFromEachFormula = formulas.map(literal => sanitiseLiteral(literal).split(/\s+/g));
 		
-		// assumes that literals all conform to same template
-		// takes first literal, compares against predicate words to construct a template
-		const termNames = Template.termNamesFromLiteral(literals[0], predicateWords);
-		const terms = termNames.map(t => new Atom(t, typeTree.getType(t)));
-		const template = Template.fromFormula(typeTree, literals[0], terms);
+		const formula = wordsFromEachFormula[0];
+		const otherFormulas = deepCopy(wordsFromEachFormula.slice(1, undefined));
+		const elements: TemplateElement[] = [];
+
+		let passedTerm = false;
+		let currSurrounding = '';
+		let typeNumber = 0;
+		for (const word of formula) {
+			if (otherFormulas.every(f => f.includes(word))) {
+				if (passedTerm) {
+					elements.push(new Type(Template.variableName(typeNumber++)));
+					passedTerm = false;
+				}
+				if (currSurrounding.length > 0)
+					currSurrounding += ' ';
+				currSurrounding += word;
+
+				for (const otherLiteral of otherFormulas) 
+					removeFirst(otherLiteral, word);
+			} 
+			else {
+				if (currSurrounding.length > 0) {
+					elements.push(new Surrounding(currSurrounding));
+					currSurrounding = '';
+				}
+				passedTerm = true;
+			}
+		}
+
+		if (currSurrounding.length > 0)
+			elements.push(new Surrounding(currSurrounding));
+
+		if (passedTerm && elements.length > 0) 
+			elements.push(new Type(Template.variableName(typeNumber++)));
+
+		
+		if (elements.length === 0 
+				|| elements.length === 1 && elements[0].elementKind === ElementKind.Type
+		) 
+			return undefined;
+
+		
+		// // assumes that literals all conform to same template
+		// // takes first literal, compares against predicate words to construct a template
+		// const termNames = Template.termNamesFromLiteral(formulas[0], surroundings);
+		// const terms = termNames.map(t => new Atom(t, typeTree.getType(t)));
+		// const template = Template.fromFormula(typeTree, formulas[0], terms);
 
 		// now check that all literals match the template
-		if (literals.some(literal => !template.matchesFormula(literal)))
+		const template = new Template(elements);
+		if (formulas.some(f => !template.matchesFormula(f)))
 			return undefined;
 		
 		return template;
@@ -122,34 +161,35 @@ export class Template {
 	public toSnippet(): string {
 		let snippet = '';
 		let placeholderCount = 0;
-		for (const el of this.elements) {
-			if (el.elementKind === ElementKind.Type) {
+		for (let i = 0; i < this.elements.length; i++) {
+			if (this.elements[i].elementKind === ElementKind.Type) {
 				placeholderCount++;
-				snippet += '${' + placeholderCount + ':' + el.name + '}';
+				snippet += '${' + placeholderCount + ':' + this.elements[i].name + '}';
 			} 
 			else
-				snippet += el.name;
+				snippet += this.elements[i].name;
 			
-			snippet += ' ';
+			if (i + 1 < this.elements.length)
+				snippet += ' ';	
 		}
 		return snippet;
 	}
 
 	
-	public withVariable(term: Term, variableName: string | undefined = undefined): Template {
-		if (variableName === undefined)
-			variableName = `a ${term}`;
-		
+	public withVariable(term: Term): Template {
 		const variableRegex = new RegExp(`(${regexSanitise(term.name)})`); // keeps the `variable` delimeter
 		const newElements: TemplateElement[] = [];
 
 		for (const el of this.elements) {
 			if (el.elementKind === ElementKind.Surrounding && variableRegex.test(term.name)) {
 				const elementStrings = el.name.split(variableRegex);
-				for (let elString of elementStrings) {
-					elString = elString.trim();
+				for (let i = 0; i < elementStrings.length; i++) {
+					const elString = elementStrings[i].trim();
 					if (elString.length > 0) {
-						if (elString === term.name)
+						if (newElements.length > 0 
+								&& newElements.at(-1)?.elementKind === ElementKind.Surrounding 
+								&& elString === term.name
+						)
 							newElements.push(term.type);
 						else 
 							newElements.push(new Surrounding(elString));
@@ -183,48 +223,38 @@ export class Template {
 	// the 	very ugly dad 	of the person is 	a citizen
 	// the 	___				of the person is	___
 
-	private static predicateWordsFromLiterals(literals: string[][]): string[] {
-		const literal = literals[0];
-		const otherLiterals = deepCopy(literals.slice(1, undefined));
-		const predicateWords: string[] = [];
-
-		for (const word of literal) {
-			if (otherLiterals.every(literal => literal.includes(word))) {
-				predicateWords.push(word);
-				for (const otherLiteral of otherLiterals) 
-					removeFirst(otherLiteral, word);
-			}
-		}
-
-		return predicateWords;
-	}
+	// private static surroundingsFromFormulas(formulas: string[][]): string[] {
 		
 
-	private static termNamesFromLiteral(literal: string, predicateWords: string[]): string[] {
-		const literalWords = literal.split(/\s+/g);
-		const terms: string[] = [];
-		let currentTerm = '';
+	// 	return surroundings;
+	// }
+		
 
-		literalWords.forEach(word => {
-			if (predicateWords.length > 0 && word === predicateWords[0]) {
-				if (currentTerm.length > 0) {
-					terms.push(currentTerm);
-					currentTerm = '';
-				}
-				predicateWords.shift(); // pop first word
-			}
-			else {
-				if (currentTerm.length > 0)
-					currentTerm += ' ';
-				currentTerm += word;
-			}
-		});
+	// private static termNamesFromLiteral(literal: string, predicateWords: string[]): string[] {
+	// 	const literalWords = literal.split(/\s+/g);
+	// 	const terms: string[] = [];
+	// 	let currentTerm = '';
 
-		if (currentTerm.length > 0) 
-			terms.push(currentTerm);
+	// 	literalWords.forEach(word => {
+	// 		if (predicateWords.length > 0 && word === predicateWords[0]) {
+	// 			if (currentTerm.length > 0) {
+	// 				terms.push(currentTerm);
+	// 				currentTerm = '';
+	// 			}
+	// 			predicateWords.shift(); // pop first word
+	// 		}
+	// 		else {
+	// 			if (currentTerm.length > 0)
+	// 				currentTerm += ' ';
+	// 			currentTerm += word;
+	// 		}
+	// 	});
 
-		return terms;
-	}
+	// 	if (currentTerm.length > 0) 
+	// 		terms.push(currentTerm);
+
+	// 	return terms;
+	// }
 
 	// public parseFormula(formula: string): Formula {
 	// 	const formulaElements = this.extractFormulaElements(formula);
@@ -254,7 +284,8 @@ export class Template {
 	// TODO: use clause to see if the types of literal's terms match with this template
 	public matchesFormula(formula: string): boolean {
 		const surroundings = this.surroundings;
-		const otherSurroundings = this.parseFormula(formula).surroundings;
+		const parsedFormula = this.parseFormula(formula);
+		const otherSurroundings = parsedFormula.surroundings;
 
 		if (surroundings.length !== otherSurroundings.length)
 			return false;
@@ -263,6 +294,9 @@ export class Template {
 			if (surroundings[i].name !== otherSurroundings[i].name)
 				return false;
 		}
+
+		if (parsedFormula.terms.length !== this.types.length)
+			return false;
 
 		return true;
 	}
@@ -284,7 +318,7 @@ export class Template {
 	// *an A* 		really likes 	*a B* 	with value 	*a C*
 	// fred bloggs	really likes 	apples	with val
 	// output = fred bloggs really likes apples with value *a C*
-	public substituteTerms(typeTree: TypeTree, formula: string): Template {
+	public substituteTerms(formula: string): Template {
 		const terms = this.parseFormula(formula).terms;
 
 		const elements: TemplateElement[] = [];

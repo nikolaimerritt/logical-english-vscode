@@ -47,7 +47,7 @@ function literalWithNoTemplateFixes(params: CodeActionParams, schema: Schema, do
 	};
 
 
-	let generatedTemplate = Template.fromLGG(typeTree, formulasWithNoTemplate.map(f => f.content));
+	let generatedTemplate = Template.fromLGG(formulasWithNoTemplate.map(f => f.content));
 	if (generatedTemplate === undefined)
 		return [];
 
