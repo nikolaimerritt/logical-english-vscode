@@ -1,3 +1,5 @@
+// adapted from https://github.com/LogicalContracts/LogicalEnglish/blob/main/le_handbook.pdf
+
 export const defaultTemplateStrings = [
 	"appending *a thing* then *a list* gives *a list*",
 	"*a list* is the reverse of *a list*",
