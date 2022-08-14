@@ -1,15 +1,24 @@
 import { Position, Range } from 'vscode-languageserver';
 import { Template } from './template';
-import { Formula, Term } from './formula';
+import { Formula, TemplatelessFormula, Term } from './formula';
 import { TypeTree } from './type-tree';
 import { defaultTemplateStrings } from './default-templates';
 import { sanitiseLiteral } from './utils';
-import { isTemplateless, Schema, TemplatelessFormula } from './schema';
+import { isTemplateless, Schema } from './schema';
 
 
-export type ContentRange<T> = {
-	content: T,
-	range: Range
+export class ContentRange<T> {
+	public readonly content: T;
+	public readonly range: Range;
+
+	constructor(content: T, range: Range) {
+		this.content = content;
+		this.range = range;
+	}
+
+	public transformContent<U>(transformContent: (content: T) => U): ContentRange<U> {
+		return new ContentRange<U>(transformContent(this.content), this.range);
+	}
 }
 
 
@@ -46,12 +55,10 @@ function sectionRange(text: string, headerPredicate: (header: string) => boolean
 	if (end === undefined)
 		end = { line: lines.length, character: 0 };
 
-	return {
-		content: lines.slice(start.line, end.line + 1),
-		range: { 
-			start, end
-		}
-	};
+	return new ContentRange(
+		lines.slice(start.line, end.line + 1),
+		{ start, end }
+	);
 }
 
 export function sectionWithHeader(text: string, headerText: string): ContentRange<string[]> | undefined {
@@ -129,9 +136,9 @@ export function clausesInDocument(text: string): ContentRange<string>[] {
 			
 		if (clauseStart !== undefined && (clauseEndPattern.test(lines[l]) || l === clauseRange.end.line - 1)) {
 			clauseEnd = l;
-			clauses.push({
-				content: lines.slice(clauseStart, clauseEnd + 1).join('\n'),
-				range: {
+			clauses.push(new ContentRange(
+				lines.slice(clauseStart, clauseEnd + 1).join('\n'),
+				{
 					start: {
 						line: clauseStart,
 						character: 0
@@ -141,7 +148,7 @@ export function clausesInDocument(text: string): ContentRange<string>[] {
 						character: lines[clauseEnd].length
 					}
 				} 
-			});
+			));
 			isInsideClause = false;
 		}
 	}
@@ -180,9 +187,7 @@ function formulasInClause(schema: Schema, clause: ContentRange<string>): Content
 
 	for (let lineOffset = 0; lineOffset < lines.length; lineOffset++) {
 		const lineNumber = clause.range.start.line + lineOffset;
-		const formulasInLine = lines[lineOffset].split(connectivesRegex())
-		.map(sanitiseLiteral)
-		.filter(lit => lit.length > 0);
+		const formulasInLine = formulaStringsInLine(lines[lineOffset]);
 
 		formulasInLine.forEach(formula => {
 			const range: Range = {
@@ -195,14 +200,28 @@ function formulasInClause(schema: Schema, clause: ContentRange<string>): Content
 					character: lines[lineOffset].indexOf(formula) + formula.length
 				}
 			};
-			formulasWithRanges.push({
-				content: schema.parseFormula(formula),
+			formulasWithRanges.push(new ContentRange(
+				schema.parseFormula(formula),
 				range
-			});
+			));
 		});
 	}
 
 	return formulasWithRanges;
+}
+
+export const subformulaPattern = /(?<= that )(\s*).*/g;
+
+function formulaStringsInLine(line: string): string[] {
+	const formulaStrings: string[] = line.split(connectivesRegex())
+	.map(sanitiseLiteral)
+	.filter(lit => lit.length > 0);
+
+	for (const match of line.matchAll(subformulaPattern)) {
+		formulaStrings.push(match[0]);
+	}
+
+	return formulaStrings;
 }
 
 
@@ -224,9 +243,9 @@ export function termsInClause(schema: Schema, clause: ContentRange<string>): Con
 
 			for (const term of formula.terms) {
 				termIdx = formula.name.indexOf(term.name, termIdx);
-				termRanges.push({
-					content: term,
-					range: {
+				termRanges.push(new ContentRange(
+					term,
+					{
 						start: { 
 							line: formulaRange.start.line, 
 							character: formulaRange.start.character + termIdx 
@@ -236,7 +255,7 @@ export function termsInClause(schema: Schema, clause: ContentRange<string>): Con
 							character: formulaRange.start.character + termIdx + term.name.length 
 						}
 					}
-				});
+				));
 				termIdx += term.name.length;
 			}
 		}

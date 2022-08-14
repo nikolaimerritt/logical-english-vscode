@@ -89,7 +89,7 @@ function atomsInFormulaTokens(formula: Formula, line: number, startChar: number)
         elIdx = formula.name.indexOf(el.name, elIdx);
 
         if (el.elementKind === ElementKind.Term) {
-            if (el.termKind === TermKind.Atom) {
+            if (el.termKind === TermKind.Atom || el.termKind === TermKind.TemplatelessFormula) {
                 tokens.push({
                     line,
                     char: startChar + elIdx,
@@ -98,7 +98,7 @@ function atomsInFormulaTokens(formula: Formula, line: number, startChar: number)
                     tokenModifierName: null
                 });
             }
-            else { // el is formula
+            else if (el.termKind === TermKind.Formula) { 
                 const subformulaAtoms = atomsInFormulaTokens(el, line, startChar + elIdx);
                 tokens.push(...subformulaAtoms);
             }

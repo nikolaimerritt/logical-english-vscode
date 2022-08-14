@@ -1,11 +1,12 @@
 import { Type, ElementKind, Surrounding } from './element';
 
-export type Term = Formula | Atom;
+export type Term = Atom | Formula | TemplatelessFormula;
 export type FormulaElement = Surrounding | Term;
 
 export enum TermKind {
 	Atom,
-	Formula
+	Formula,
+	TemplatelessFormula
 }
 
 
@@ -14,6 +15,18 @@ export class Atom {
 	public readonly termKind = TermKind.Atom;
 	public readonly type: Type;
 	public readonly name: string;
+
+	constructor(name: string, type: Type) {
+		this.name = name;
+		this.type = type;
+	}
+}
+
+export class TemplatelessFormula {
+	public readonly name: string;
+	public readonly elementKind = ElementKind.Term;
+	public readonly termKind = TermKind.TemplatelessFormula;
+	public readonly type: Type;
 
 	constructor(name: string, type: Type) {
 		this.name = name;

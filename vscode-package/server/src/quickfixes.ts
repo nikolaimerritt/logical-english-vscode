@@ -13,9 +13,8 @@ import {
 	typeTreeInDocument 
 } from './parsing';
 
-import { debugOnStart } from './diagnostics';
-import { Term } from './formula';
-import { isTemplateless, Schema, TemplatelessFormula } from './schema';
+import { TemplatelessFormula, Term } from './formula';
+import { isTemplateless, Schema } from './schema';
 
 // adapted from https://github.com/YuanboXue-Amber/endevor-scl-support/blob/master/server/src/CodeActionProvider.ts
 
@@ -30,12 +29,7 @@ function literalWithNoTemplateFixes(params: CodeActionParams, schema: Schema, do
 	const typeTree = typeTreeInDocument(document);
 	const formulasWithNoTemplate: ContentRange<TemplatelessFormula>[] = formulasInDocument(schema, document)
 	.filter(({content: formula}) => isTemplateless(formula))
-	.map(
-		(contentRange) => ({ 
-			content: contentRange.content as TemplatelessFormula,
-			range: contentRange.range 
-		})
-	);
+	.map(c => c.transformContent(f => f as TemplatelessFormula));
 	
 	const templatesRange = sectionWithHeader(document, 'templates')?.range;
 	if (templatesRange === undefined)
@@ -47,14 +41,14 @@ function literalWithNoTemplateFixes(params: CodeActionParams, schema: Schema, do
 	};
 
 
-	let generatedTemplate = Template.fromLGG(formulasWithNoTemplate.map(f => f.content));
+	let generatedTemplate = Template.fromLGG(formulasWithNoTemplate.map(f => f.content.name));
 	if (generatedTemplate === undefined)
 		return [];
 
 	
 	// trying to add every variable in the clauses containing the literals, to the template
 	for (const formula of formulasWithNoTemplate) {
-		const clause = clauseContainingLiteral(document, formula);
+		const clause = clauseContainingLiteral(document, formula.transformContent(f => f.name));
 		if (clause !== undefined) {
 			for (const { content: term } of termsInClause(schema, clause))
 				generatedTemplate = generatedTemplate.withVariable(term);
