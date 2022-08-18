@@ -29,7 +29,7 @@ function literalWithNoTemplateFixes(params: CodeActionParams, schema: Schema, do
 	const typeTree = typeTreeInDocument(document);
 	const formulasWithNoTemplate: ContentRange<TemplatelessFormula>[] = formulasInDocument(schema, document)
 	.filter(({content: formula}) => isTemplateless(formula))
-	.map(c => c.transformContent(f => f as TemplatelessFormula));
+	.map(c => c.mapContent(f => f as TemplatelessFormula));
 	
 	const templatesRange = sectionWithHeader(document, 'templates')?.range;
 	if (templatesRange === undefined)
@@ -48,9 +48,9 @@ function literalWithNoTemplateFixes(params: CodeActionParams, schema: Schema, do
 	
 	// trying to add every variable in the clauses containing the literals, to the template
 	for (const formula of formulasWithNoTemplate) {
-		const clause = clauseContainingLiteral(document, formula.transformContent(f => f.name));
+		const clause = clauseContainingLiteral(document, formula.mapContent(f => f.name));
 		if (clause !== undefined) {
-			for (const { content: term } of termsInClause(schema, clause))
+			for (const { content: term } of termsInClause(schema, clause)) 
 				generatedTemplate = generatedTemplate.withVariable(term);
 		}
 	}

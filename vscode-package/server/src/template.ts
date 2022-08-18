@@ -61,25 +61,6 @@ export class Template {
 	}
 
 
-	// public static fromFormula(formula: string, terms: Term[]): Template {
-	// 	formula = sanitiseLiteral(formula);
-	// 	const sanitisedTermNames = terms.map(t => regexSanitise(t.name));
-	// 	const argumentBlockRegex = new RegExp(`(?:(${sanitisedTermNames.join('|')}))`, 'g');
-	// 	const elementStrings = removeBlanks(formula.split(argumentBlockRegex));
-
-	// 	const elements: TemplateElement[] = [];
-
-	// 	for (const el of elementStrings) {
-	// 		const term = terms.find(term => term.name === el);
-	// 		if (term === undefined)
-	// 			elements.push(new Surrounding(el));
-	// 		else 
-	// 			elements.push(term.type);
-	// 	}
-
-	// 	return new Template(elements);
-	// }
-
 	public static fromLGG(formulas: string[]): Template | undefined {
 		if (formulas.length === 0)
 			return undefined;
@@ -130,12 +111,6 @@ export class Template {
 		) 
 			return undefined;
 
-		
-		// // assumes that literals all conform to same template
-		// // takes first literal, compares against predicate words to construct a template
-		// const termNames = Template.termNamesFromLiteral(formulas[0], surroundings);
-		// const terms = termNames.map(t => new Atom(t, typeTree.getType(t)));
-		// const template = Template.fromFormula(typeTree, formulas[0], terms);
 
 		// now check that all literals match the template
 		const template = new Template(elements);
@@ -186,9 +161,10 @@ export class Template {
 				for (let i = 0; i < elementStrings.length; i++) {
 					const elString = elementStrings[i].trim();
 					if (elString.length > 0) {
-						if (newElements.length > 0 
-								&& newElements.at(-1)?.elementKind === ElementKind.Surrounding 
-								&& elString === term.name
+						if (elString === term.name && 
+							(newElements.length === 0 
+								|| (newElements.length > 0 
+									&& newElements.at(-1)?.elementKind === ElementKind.Surrounding))
 						)
 							newElements.push(term.type);
 						else 
@@ -219,72 +195,12 @@ export class Template {
 		return variableNames[index];
 	}
 
-	// the 	big mother 		of the person is 	unknown
-	// the 	very ugly dad 	of the person is 	a citizen
-	// the 	___				of the person is	___
-
-	// private static surroundingsFromFormulas(formulas: string[][]): string[] {
-		
-
-	// 	return surroundings;
-	// }
-		
-
-	// private static termNamesFromLiteral(literal: string, predicateWords: string[]): string[] {
-	// 	const literalWords = literal.split(/\s+/g);
-	// 	const terms: string[] = [];
-	// 	let currentTerm = '';
-
-	// 	literalWords.forEach(word => {
-	// 		if (predicateWords.length > 0 && word === predicateWords[0]) {
-	// 			if (currentTerm.length > 0) {
-	// 				terms.push(currentTerm);
-	// 				currentTerm = '';
-	// 			}
-	// 			predicateWords.shift(); // pop first word
-	// 		}
-	// 		else {
-	// 			if (currentTerm.length > 0)
-	// 				currentTerm += ' ';
-	// 			currentTerm += word;
-	// 		}
-	// 	});
-
-	// 	if (currentTerm.length > 0) 
-	// 		terms.push(currentTerm);
-
-	// 	return terms;
-	// }
-
-	// public parseFormula(formula: string): Formula {
-	// 	const formulaElements = this.extractFormulaElements(formula);
-	// 	const f = new Formula(dummyType, formulaElements);
-	// 	console.log('Parsed formula ' + formula);
-	// 	console.log(f);
-
-	// 	return f;
-	// }
-
-
-	// public parseTerms(formula: string): Term[] {
-	// 	return this.parseFormula(formula)
-	// 	.elements
-	// 	.filter(el => el.elementKind === ElementKind.Term)
-	// 	.map(term => term as Term);
-	// }
-
-	// public parseSurroundings(formula: string): Surrounding[] {
-	// 	return this.parseFormula(formula)
-	// 	.elements
-	// 	.filter(el => el.elementKind === ElementKind.Surrounding) 
-	// 	.map(s => s as Surrounding);
-	// }
-
 
 	// TODO: use clause to see if the types of literal's terms match with this template
 	public matchesFormula(formula: string): boolean {
 		const surroundings = this.surroundings;
-		const parsedFormula = this.parseFormula(formula);
+		const localTypeTree = new TypeTree();
+		const parsedFormula = this.parseFormula(localTypeTree, formula);
 		const otherSurroundings = parsedFormula.surroundings;
 
 		if (surroundings.length !== otherSurroundings.length)
@@ -308,7 +224,8 @@ export class Template {
 	// fred bloggs [wants to see] the eiffel tower [at] --> score = 12
 	// wants to [wants to see] --> score = 10
 	public matchScore(formula: string): number {
-		return this.parseFormula(formula)
+		const localTypeTree = new TypeTree();
+		return this.parseFormula(localTypeTree, formula)
 		.surroundings
 		.map(surrounding => surrounding.name)
 		.join(' ')
@@ -319,7 +236,8 @@ export class Template {
 	// fred bloggs	really likes 	apples	with val
 	// output = fred bloggs really likes apples with value *a C*
 	public substituteTerms(formula: string): Template {
-		const terms = this.parseFormula(formula).terms;
+		const localTypeTree = new TypeTree();
+		const terms = this.parseFormula(localTypeTree, formula).terms;
 
 		const elements: TemplateElement[] = [];
 		for (const el of this.elements) {
@@ -338,29 +256,10 @@ export class Template {
 		return new Template(elements);
 	}
 
-	// finds the template that 
-	// 	- matches the literal
-	// 	- then, has the most amount of variables
-	//  - then, has the longest surroundings
-	// public static findBestMatch(templates: Template[], formula: string): Template | undefined {
-	// 	const subformulaPattern = /(?<= that ).*/g;
-	// 	if (subformulaPattern.test(formula))
-	// 		formula = formula.replace(subformulaPattern, '_');
-		
-	// 	const candidates = templates.filter(t => t.matchesFormula(formula));
 
-	// 	if (candidates.length === 0)
-	// 		return undefined;
-
-	// 	const maxVariableCount = Math.max(...candidates.map(t => t.types.length));
-	// 	const candidatesWithMaxVars = candidates.filter(t => t.types.length === maxVariableCount);
-	// 	return maximal(candidatesWithMaxVars, t => t.surroundings.join(' ').length);
-	// }
-
-
-	public parseFormula(formula: string): Formula {
+	public parseFormula(typeTree: TypeTree, formula: string): Formula {
 		const elements = this.parseElements(formula);
-		return new Formula(dummyType, elements);
+		return new Formula(typeTree.predicateTopType, elements);
 	}
 
 	private parseElements(formula: string): FormulaElement[] {
@@ -404,18 +303,8 @@ export class Template {
 
 		if (formula.length > 0 && lastTypeIdx >= 0 && lastTypeIdx < this.elements.length) {
 			const type = this.elements[lastTypeIdx];
-			if (type.elementKind === ElementKind.Type) {
-				// if (
-				// 	lastTypeIdx - 1 >= 0
-				// 	&& template.elements[lastTypeIdx - 1].elementKind === ElementKind.Surrounding
-				// 	&& template.elements[lastTypeIdx - 1].name.endsWith(' that')
-				// ) {
-				// 	const formulaElements = this.extractFormulaElements(formula);
-				// 	elements.push(new Formula(type, formulaElements));
-				// }
-				// else 
+			if (type.elementKind === ElementKind.Type) 
 					elements.push(new Atom(sanitiseLiteral(formula), type));
-			}
 		}
 		return elements;
 	}

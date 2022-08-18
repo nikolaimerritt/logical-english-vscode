@@ -2,13 +2,14 @@
 
 import * as assert from 'assert';
 import { Type } from '../../element';
-import { Atom, Term, TermKind } from '../../formula';
+import { Atom, Term } from '../../formula';
 
 // You can import and use all API from the 'vscode' module
 // as well as import your extension to test it
 // import * as myExtension from '../../extension';
 import { Template } from '../../template';
 import { TypeTree } from '../../type-tree';
+import { everySublistOf, listOfPhrases } from './helper';
 
 suite('Template.fromString()', () => {
 	const typeTree = new TypeTree();
@@ -491,11 +492,12 @@ suite('Template.substituteTerms()', () => {
 		];
 
 		for (const string of templateStrings) {
-			const template = Template.fromString(new TypeTree(), string);
+			const localTypeTree = new TypeTree();
+			const template = Template.fromString(localTypeTree, string);
 			const formula = formulaForTemplate(template);
 
 			for (let i = 1; i < formula.length; i++) {
-				const subformula = template.parseFormula(formula.substring(0, i));
+				const subformula = template.parseFormula(localTypeTree, formula.substring(0, i));
 				const newTemplate = template.substituteTerms(subformula.name);
 
 				assert.ok(
@@ -536,10 +538,11 @@ suite('Template.parseFormula()', () => {
 		];
 	
 		for (const string of templateStrings) {
-			const template = Template.fromString(new TypeTree(), string);
+			const localTypeTree = new TypeTree();
+			const template = Template.fromString(localTypeTree, string);
 			const terms = listOfPhrases().slice(0, template.types.length);
 			const formulaString = formulaForTemplate(template, terms);
-			const formula = template.parseFormula(formulaString);
+			const formula = template.parseFormula(localTypeTree, formulaString);
 	
 			assert.ok(
 				terms.length === formula.terms.length
@@ -567,78 +570,19 @@ suite('Template.parseFormula()', () => {
 });
 
 
-function everySublistOf<T>(list: T[], minLength = 2) {
-	return everySublistRec(list)
-	.filter(sub => sub.length >= minLength);
-}
-
-
-function everySublistRec<T>(list: T[]): T[][] {
-	if (list.length === 1)
-		return [list, []];
-
-	// sublist with list[0] present + sublist with list[0] absent
-	const withoutFirst = everySublistRec(list.slice(1, undefined));
-	const every: T[][] = [];
-	for (const sublist of withoutFirst) {
-		every.push(sublist);	
-		every.push(sublist.concat([ list[0] ]));
-	}
-	return every;
-}
-
-function listOfPhrases(): string[] {
-	const maxPhrases = 10;
-	const maxWordsPerPhrase = 3;
-	const maxWords = maxPhrases * maxWordsPerPhrase;
-
-	const text = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum';
-	const words = text
-	.replace(/,|\./g, '')
-	.toLowerCase()
-	.repeat(Math.ceil(maxWords / countOccurances(text, ' ')))
-	.split(' ');
-
-	const spacesCounts = `${Math.E}${Math.PI}`
-	.replace(/\./g, '')
-	.split('')
-	.map(n => 1 + parseInt(n) % maxWordsPerPhrase);
-
-
-	const phrases: string[] = [];
-	let spaceCountIdx = 0;
-	let phrase = '';
-	for (const word of words) {
-		if (countOccurances(phrase, ' ') === spacesCounts[spaceCountIdx]) {
-			phrases.push(phrase.trim().replace(/\s+/g, ' '));
-			phrase = '';
-			spaceCountIdx = (spaceCountIdx + 1) % spacesCounts.length;
-		}
-		else 
-			phrase += ' ' + word;
-	}
-
-	return phrases;
-
-}
-
 function formulaForTemplate(
-		template: Template, 
-		terms: string[] = listOfPhrases()
+	template: Template, 
+	terms: string[] = listOfPhrases()
 ): string {
-	terms = terms.filter(_ => true);
-	let formula = template.toString();
-	for (const type of template.types) {
-		formula = formula.replace(
-			new RegExp(`\\*${type.name}\\*`, 'g'), 
-			terms[0]
-		);
-		terms.shift();
-	}
-
-	return formula;
+terms = terms.filter(_ => true);
+let formula = template.toString();
+for (const type of template.types) {
+	formula = formula.replace(
+		new RegExp(`\\*${type.name}\\*`, 'g'), 
+		terms[0]
+	);
+	terms.shift();
 }
 
-function countOccurances(text: string, substring: string): number {
-	return text.split(substring).length - 1;
+return formula;
 }

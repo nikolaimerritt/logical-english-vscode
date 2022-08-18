@@ -74,3 +74,7 @@ export function ignoreComments(text: string): string {
 	const singleLineComment = /%.*/g;
 	return text.replace(singleLineComment, '');
 }
+
+export function paddedString(num: number, length = 4): string {
+	return String(num).padStart(length, '0');
+}

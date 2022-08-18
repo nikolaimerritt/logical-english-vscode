@@ -7,37 +7,44 @@ import {
 	TextEdit 
 } 
 from "vscode-languageserver";
-import { areaWithClauses, templatesInDocument, typeTreeInDocument } from './parsing';
-import { sortBy, literalAtPosition } from './utils';
+import { areaWithClauses, sectionWithHeader, templatesInDocument, typeCheckingEnabled, typeTreeInDocument } from './parsing';
+import { sortBy, literalAtPosition, ignoreComments, paddedString } from './utils';
 import { Template } from './template';
 
 export function completions(text: string, params: TextDocumentPositionParams): CompletionItem[] {	
-	return literalCompletion(text, params);
+	const completions: CompletionItem[] = [];
+	const typeChecking = typeCheckingEnabled(text);
+	text = ignoreComments(text);
+
+	completions.push(...headerCompletions(text, params.position, typeChecking));
+	completions.push(...literalCompletion(text, params.position));
+
+	return completions.slice(0, 3);
 }
 
 
-function literalCompletion(text: string, params: TextDocumentPositionParams): CompletionItem[] {
+function literalCompletion(text: string, position: Position): CompletionItem[] {
 	// const knowledgeBaseRange = sectionRange('knowledge base', text)?.range;
 	const allClausesRange = areaWithClauses(text)?.range;
 	if (allClausesRange === undefined 
-			|| params.position.line < allClausesRange.start.line 
-			|| params.position.line > allClausesRange.end.line) 
+			|| position.line < allClausesRange.start.line 
+			|| position.line > allClausesRange.end.line) 
 		return [];
 	
 	const typeTree = typeTreeInDocument(text);
 
-	const line = text.split('\n')[params.position.line];
-	const literal = literalAtPosition(line, params.position.character);
+	const line = text.split('\n')[position.line];
+	const literal = literalAtPosition(line, position.character);
 	if (literal === undefined)
 		return [];
 
 	const literalStart: Position = {
-		line: params.position.line,
+		line: position.line,
 		character: line.indexOf(literal)
 	};
 
 	const literalEnd: Position = {
-		line: params.position.line,
+		line: position.line,
 		character: line.indexOf(literal) + literal.length + 1
 	};
 
@@ -47,14 +54,23 @@ function literalCompletion(text: string, params: TextDocumentPositionParams): Co
 	};
 
 	const maxCompletions = 3;
+	const scoreThreshold = 2;
 	const templates = templatesInDocument(text);
 	const bestTemplatesWithScores = sortBy(
-		templates.map(t => [t, t.matchScore(literal)] as [Template, number]),
+		templates
+			.map(t => [t, t.matchScore(literal)] as [Template, number])
+		,
 		([_, score]) => score
 	)
 	.slice(Math.max(templates.length - maxCompletions, 0));
 
-	return bestTemplatesWithScores.map(([template, score]) => {
+	console.log('Scores:');
+	console.log(bestTemplatesWithScores);
+
+
+	return bestTemplatesWithScores
+	.filter(([_, score]) => score > 0)
+	.map(([template, score]) => {
 		const templateWithMissingTerms = template.substituteTerms(literal);
 		const textEdit = TextEdit.replace(literalToEndOfLine, templateWithMissingTerms.toSnippet());
 		const completion: CompletionItem = {
@@ -62,8 +78,76 @@ function literalCompletion(text: string, params: TextDocumentPositionParams): Co
 			kind: CompletionItemKind.Text,
 			insertTextFormat: InsertTextFormat.Snippet,
 			textEdit,
-			sortText: String(score).padStart(4, '0')
+			sortText: paddedString(score)
 		};
 		return completion;
 	});
+}
+
+
+function headerCompletions(document: string, position: Position,  typeChecking: boolean): CompletionItem[] {
+	const completions: CompletionItem[] = [];
+	const line = document.split('\n')[position.line].trim();
+	const lineRange: Range = {
+		start: { line: position.line, character: 0 },
+		end: { line: position.line, character: position.character + 1 }
+	};
+
+	let priority = 0;
+	if (line.startsWith('the')) {
+		const templatesHeader = 'the templates are:';
+		const typeHierarchyHeader = 'the type hierarchy is:';
+
+		if (typeChecking && sectionWithHeader(document, typeHierarchyHeader) === undefined) {
+			completions.push({
+				label: typeHierarchyHeader,
+				kind: CompletionItemKind.Text,
+				insertTextFormat: InsertTextFormat.PlainText,
+				textEdit: TextEdit.replace(lineRange, templatesHeader),
+				sortText: paddedString(priority++)
+			});
+		}
+
+		if (sectionWithHeader(document, templatesHeader) === undefined) {
+			completions.push({
+				label: templatesHeader,
+				kind: CompletionItemKind.Text,
+				insertTextFormat: InsertTextFormat.PlainText,
+				textEdit: TextEdit.replace(lineRange, templatesHeader),
+				sortText: paddedString(priority++)
+			});
+		}
+
+		if (sectionWithHeader(document, 'the knowledge base') === undefined) {
+			completions.push({
+				label: 'the knowledge base __ includes:',
+				kind: CompletionItemKind.Text,
+				insertTextFormat: InsertTextFormat.Snippet,
+				textEdit: TextEdit.replace(lineRange, 'the knowledge base ${1} includes:'),
+				sortText: paddedString(priority++)
+			});
+		}
+	}
+	
+	else if (line.startsWith('scen')) {
+		completions.push(({
+			label: 'scenario __ is:',
+			kind: CompletionItemKind.Text,
+			insertTextFormat: InsertTextFormat.Snippet,
+			textEdit: TextEdit.replace(lineRange, 'scenario ${1} is:'),
+			sortText: paddedString(priority++)
+		}));
+	}
+
+	else if (line.startsWith('quer')) {
+		completions.push({
+			label: 'query __ is:',
+			kind: CompletionItemKind.Text,
+			insertTextFormat: InsertTextFormat.Snippet,
+			textEdit: TextEdit.replace(lineRange, 'query ${1} is:'),
+			sortText: paddedString(priority++)
+		});
+	}
+
+	return completions;
 }

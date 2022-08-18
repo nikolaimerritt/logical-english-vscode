@@ -9,7 +9,8 @@ import {
 	formulasInDocument, 
 	clausesInDocument, 
 	termsInClause,
-	typeTreeInDocument 
+	typeTreeInDocument, 
+	typeCheckingEnabled
 } from './parsing';
 import { ignoreComments } from './utils';
 import { Template } from './template';
@@ -32,14 +33,12 @@ export function diagnostics(document: string): Diagnostic[] {
 	// debugOnStart();
 
 	const schema = Schema.fromDocument(document);
-	const typeCheckingRegex = /^.*(%type checking:? on)\s*$/gm;
-	const typeChecking = typeCheckingRegex.test(document);
+	const typeChecking = typeCheckingEnabled(document);
 	document = ignoreComments(document);
 
 	const diags = [];
 	diags.push(... literalHasNoTemplateDiags(schema, document));
 	diags.push(...misalignedConnectivesDiags(document));
-
 
 	if (typeChecking) 
 		diags.push(...typeMismatchDiags(schema, document));

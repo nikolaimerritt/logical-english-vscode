@@ -16,8 +16,8 @@ export class ContentRange<T> {
 		this.range = range;
 	}
 
-	public transformContent<U>(transformContent: (content: T) => U): ContentRange<U> {
-		return new ContentRange<U>(transformContent(this.content), this.range);
+	public mapContent<U>(func: (content: T) => U): ContentRange<U> {
+		return new ContentRange<U>(func(this.content), this.range);
 	}
 }
 
@@ -262,4 +262,10 @@ export function termsInClause(schema: Schema, clause: ContentRange<string>): Con
 	}
 
 	return termRanges;
+}
+
+
+export function typeCheckingEnabled(document: string): boolean {
+	const typeCheckingRegex = /^.*(%type checking:? on)\s*$/gm;
+	return typeCheckingRegex.test(document);
 }

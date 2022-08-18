@@ -6,9 +6,9 @@
 		"name": "Nikolai Merritt",
 		"url": "https://github.com/nikolaimerritt/"
 	},
-	"icon": "orange-circle.png",
+	"icon": "le-logo.jpeg",
 	"license": "MIT",
-	"version": "1.0.5",
+	"version": "1.1.5",
 	"homepage": "https://github.com/nikolaimerritt/logical-english-vscode",
 	"repository": {
 		"type": "git",

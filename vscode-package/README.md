@@ -14,3 +14,6 @@ If you write a literal that does not match with a template, or use terms that ar
 
 ## Experimental: Template Auto-Generation
 By comparing different literals that do not match any of your current templates, the extension can auto-generate a template that best matches them all.
+
+## Full rights to the Owl Logo are owned by Alexei Merritt.
+2022, alеxei mеrritt 111 at gmail dοt com

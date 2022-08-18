@@ -2,8 +2,8 @@ import { Template } from './template';
 import { Atom, Formula, FormulaElement, TemplatelessFormula } from './formula';
 import { ElementKind, Surrounding } from './element';
 import { maximal } from './utils';
-import { dummyType } from './type-tree';
-import { subformulaPattern, templatesInDocument } from './parsing';
+import { dummyType, TypeTree } from './type-tree';
+import { subformulaPattern, templatesInDocument, typeTreeInDocument } from './parsing';
 
 export function isTemplateless(value: Formula | TemplatelessFormula): value is TemplatelessFormula {
 	return (value as Formula).elements === undefined;
@@ -12,16 +12,21 @@ export function isTemplateless(value: Formula | TemplatelessFormula): value is T
 
 export class Schema {
 	private readonly templates: Template[];
+	private readonly typeTree: TypeTree;
 
-	constructor(templates: Template[]) {
+	constructor(typeTree: TypeTree, templates: Template[]) {
+		this.typeTree = typeTree;
 		this.templates = templates;
 	}
 
 	public static fromDocument(document: string) {
-		return new Schema(templatesInDocument(document));
+		return new Schema(
+			typeTreeInDocument(document),
+			templatesInDocument(document)
+		);
 	}
 
-	public parseFormula(formula: string, formulaType = dummyType): Formula | TemplatelessFormula {
+	public parseFormula(formula: string, formulaType = this.typeTree.predicateTopType): Formula | TemplatelessFormula {
 		// const formulaEls = this.parseElements(formula);
 		// if (formulaEls.length === 0)
 		// 	return new TemplatelessFormula(formula, formulaType);
@@ -32,7 +37,7 @@ export class Schema {
 		if (template === undefined)
 			return new TemplatelessFormula(formula, formulaType);
 		
-		const elements = template.parseFormula(formula).elements;
+		const elements = template.parseFormula(this.typeTree, formula).elements;
 		if (elements.length >= 2) {
 			const lastSurrounding = elements.at(-2);
 			const lastTerm = elements.at(-1);
