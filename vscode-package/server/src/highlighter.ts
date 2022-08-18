@@ -14,7 +14,7 @@ import { Template } from './template';
 import { formulasInDocument as formulasInDocument, templatesInDocument } from './parsing';
 import { ignoreComments } from './utils';
 import { ElementKind } from './element';
-import { Formula, TermKind } from './formula';
+import { AtomicFormula, TermKind } from './formula';
 import { isTemplateless, Schema } from './schema';
 
 
@@ -68,7 +68,7 @@ function tokensFromAllTerms(schema: Schema, document: string): TokenDetails[] {
         //     elIdx += el.name.length;
         // }
         if (!isTemplateless(formula)) {
-            const atomTokens = atomsInFormulaTokens(
+            const atomTokens = dataInFormulaTokens(
                 formula,
                 range.start.line, 
                 range.start.character
@@ -81,7 +81,7 @@ function tokensFromAllTerms(schema: Schema, document: string): TokenDetails[] {
     return tokens;
 }
 
-function atomsInFormulaTokens(formula: Formula, line: number, startChar: number): TokenDetails[] {
+function dataInFormulaTokens(formula: AtomicFormula, line: number, startChar: number): TokenDetails[] {
     const tokens: TokenDetails[] = [];
     let elIdx = 0;
 
@@ -89,7 +89,7 @@ function atomsInFormulaTokens(formula: Formula, line: number, startChar: number)
         elIdx = formula.name.indexOf(el.name, elIdx);
 
         if (el.elementKind === ElementKind.Term) {
-            if (el.termKind === TermKind.Atom || el.termKind === TermKind.TemplatelessFormula) {
+            if (el.termKind === TermKind.Data || el.termKind === TermKind.TemplatelessFormula) {
                 tokens.push({
                     line,
                     char: startChar + elIdx,
@@ -98,8 +98,8 @@ function atomsInFormulaTokens(formula: Formula, line: number, startChar: number)
                     tokenModifierName: null
                 });
             }
-            else if (el.termKind === TermKind.Formula) { 
-                const subformulaAtoms = atomsInFormulaTokens(el, line, startChar + elIdx);
+            else if (el.termKind === TermKind.AtomicFormula) { 
+                const subformulaAtoms = dataInFormulaTokens(el, line, startChar + elIdx);
                 tokens.push(...subformulaAtoms);
             }
         }

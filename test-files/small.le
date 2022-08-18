@@ -1,4 +1,10 @@
+%type checking: on
+the type hierarchy is:
+a person
+	an employee
+
 the templates are:
-*a person* goes to *a place*.
+*an employee* works for *a person*.
 
 the knowledge base Small includes: 
+mike works for mike.

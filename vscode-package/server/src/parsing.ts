@@ -1,6 +1,6 @@
 import { Position, Range } from 'vscode-languageserver';
 import { Template } from './template';
-import { Formula, TemplatelessFormula, Term } from './formula';
+import { AtomicFormula, TemplatelessFormula, Term } from './formula';
 import { TypeTree } from './type-tree';
 import { defaultTemplateStrings } from './default-templates';
 import { sanitiseLiteral } from './utils';
@@ -181,9 +181,9 @@ export function connectivesRegex(): RegExp {
 }
 
 
-function formulasInClause(schema: Schema, clause: ContentRange<string>): ContentRange<Formula | TemplatelessFormula>[] {
+function formulasInClause(schema: Schema, clause: ContentRange<string>): ContentRange<AtomicFormula | TemplatelessFormula>[] {
 	const lines = clause.content.split('\n');
-	const formulasWithRanges: ContentRange<Formula | TemplatelessFormula>[] = [];
+	const formulasWithRanges: ContentRange<AtomicFormula | TemplatelessFormula>[] = [];
 
 	for (let lineOffset = 0; lineOffset < lines.length; lineOffset++) {
 		const lineNumber = clause.range.start.line + lineOffset;
@@ -226,7 +226,7 @@ function formulaStringsInLine(line: string): string[] {
 
 
 
-export function formulasInDocument(schema: Schema, text: string): ContentRange<Formula | TemplatelessFormula>[] {
+export function formulasInDocument(schema: Schema, text: string): ContentRange<AtomicFormula | TemplatelessFormula>[] {
 	const clauses = clausesInDocument(text);
 	return clauses
 	.flatMap(clause => formulasInClause(schema, clause));

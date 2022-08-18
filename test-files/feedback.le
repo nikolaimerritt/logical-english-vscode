@@ -1,0 +1,20 @@
+%type checking: on
+the type hierarchy is:
+a person
+	an employee
+
+the templates are:
+*a person* goes on holiday to *a resort*
+a friend of *a person* is *a person*
+*a person* says that *a statement*
+*a resort* includes *a thing* 
+*a person* married *a person*.
+*a resort* has not banned *a person*.
+*an employee* calls in sick.
+
+the knowledge base Holidays includes:
+fred bloggs goes on holiday to sand if 
+	sand has not banned fred bloggs
+	and fred bloggs calls in sick.
+
+jim halpert goes on holiday to a resort

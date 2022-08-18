@@ -1,7 +1,7 @@
 import { deepCopy, removeBlanks, removeFirst, regexSanitise, maximal, sortBy, sanitiseLiteral } from './utils';
 import { dummyType, TypeTree } from './type-tree';
 import { Type, TemplateElement, Surrounding, ElementKind } from './element';
-import { Atom, Formula, FormulaElement, Term, TermKind } from './formula';
+import { Data, AtomicFormula, FormulaElement, Term, TermKind } from './formula';
 
 
 
@@ -257,9 +257,9 @@ export class Template {
 	}
 
 
-	public parseFormula(typeTree: TypeTree, formula: string): Formula {
+	public parseFormula(typeTree: TypeTree, formula: string): AtomicFormula {
 		const elements = this.parseElements(formula);
-		return new Formula(typeTree.predicateTopType, elements);
+		return new AtomicFormula(typeTree.predicateTopType, elements);
 	}
 
 	private parseElements(formula: string): FormulaElement[] {
@@ -292,7 +292,7 @@ export class Template {
 					const type = this.elements[i - 1];
 					if (type.elementKind === ElementKind.Type) {
 						const termName = sanitiseLiteral(formula.slice(0, phraseIdx));
-						elements.push(new Atom(termName, type));
+						elements.push(new Data(termName, type));
 					}
 				}
 
@@ -304,7 +304,7 @@ export class Template {
 		if (formula.length > 0 && lastTypeIdx >= 0 && lastTypeIdx < this.elements.length) {
 			const type = this.elements[lastTypeIdx];
 			if (type.elementKind === ElementKind.Type) 
-					elements.push(new Atom(sanitiseLiteral(formula), type));
+					elements.push(new Data(sanitiseLiteral(formula), type));
 		}
 		return elements;
 	}

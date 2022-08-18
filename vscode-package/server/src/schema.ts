@@ -1,12 +1,12 @@
 import { Template } from './template';
-import { Atom, Formula, FormulaElement, TemplatelessFormula } from './formula';
+import { Data, AtomicFormula, FormulaElement, TemplatelessFormula } from './formula';
 import { ElementKind, Surrounding } from './element';
 import { maximal } from './utils';
 import { dummyType, TypeTree } from './type-tree';
 import { subformulaPattern, templatesInDocument, typeTreeInDocument } from './parsing';
 
-export function isTemplateless(value: Formula | TemplatelessFormula): value is TemplatelessFormula {
-	return (value as Formula).elements === undefined;
+export function isTemplateless(value: AtomicFormula | TemplatelessFormula): value is TemplatelessFormula {
+	return (value as AtomicFormula).elements === undefined;
 }
 
 
@@ -26,7 +26,7 @@ export class Schema {
 		);
 	}
 
-	public parseFormula(formula: string, formulaType = this.typeTree.predicateTopType): Formula | TemplatelessFormula {
+	public parseFormula(formula: string, formulaType = this.typeTree.predicateTopType): AtomicFormula | TemplatelessFormula {
 		// const formulaEls = this.parseElements(formula);
 		// if (formulaEls.length === 0)
 		// 	return new TemplatelessFormula(formula, formulaType);
@@ -50,7 +50,7 @@ export class Schema {
 			}
 		}
 	
-		return new Formula(formulaType, elements);
+		return new AtomicFormula(formulaType, elements);
 	}
 
 	// finds the template that 

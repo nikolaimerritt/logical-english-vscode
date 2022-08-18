@@ -1,4 +1,4 @@
-import { Formula, TemplatelessFormula, Term } from '../../formula';
+import { AtomicFormula, TemplatelessFormula, Term } from '../../formula';
 import { ContentRange } from '../../parsing';
 import { Template } from '../../template';
 
@@ -9,7 +9,7 @@ export interface DocTestCase {
 	knowledgeBase: ContentRange<string[]>,
 	scenarios: ContentRange<string[]>[],
 	queries: ContentRange<string[]>[],
-	formulas: ContentRange<Formula | TemplatelessFormula>[],
+	formulas: ContentRange<AtomicFormula | TemplatelessFormula>[],
 	termsInClause: Map<string, ContentRange<Term>[]>
 }
 
