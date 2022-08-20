@@ -87,8 +87,8 @@ export class Template {
 					currSurrounding += ' ';
 				currSurrounding += word;
 
-				for (const otherLiteral of otherFormulas) 
-					removeFirst(otherLiteral, word);
+				for (const f of otherFormulas) 
+					removeFirst(f, word);
 			} 
 			else {
 				if (currSurrounding.length > 0) {

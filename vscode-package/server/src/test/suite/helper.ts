@@ -1,3 +1,5 @@
+import { DocumentUri, TextDocument } from 'vscode-languageserver-textdocument';
+
 export function everySublistOf<T>(list: T[], minLength = 2) {
 	return everySublistRec(list)
 	.filter(sub => sub.length >= minLength);
@@ -56,4 +58,8 @@ export function listOfPhrases(): string[] {
 
 export function countOccurances(text: string, substring: string): number {
 	return text.split(substring).length - 1;
+}
+
+export async function activateDoc(docuUri: DocumentUri) {
+	
 }
