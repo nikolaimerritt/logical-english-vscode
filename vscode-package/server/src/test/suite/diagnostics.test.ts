@@ -10,35 +10,36 @@ interface Diag {
 const errorMessage = 'Atomic formula has no template.';
 
 
+
 suite('Diagnostics: Atomic formula has no template', () => {
-	const docUri = getDocUri('no-template.le');
+
+	const docUri = getDocUri('notemplate.le');
 
 	test('Incomplete template surrounding', async () => {
-
-		testDiagnostics(
+		await testDiagnostics(
 			docUri,
 			[ diagAt(5, 4, 5, 18) ]
 		);
 	});
 
 	test('Complete template surrounding, missing variable', async () => {
-		testDiagnostics(
+		await testDiagnostics(
 			docUri,
 			[ diagAt(6, 4, 6, 34) ]
 		);
 	});
 
 	test('In higher-order formula: incomplete template surrounding', async () => {
-		testDiagnostics(
+		await testDiagnostics(
 			docUri,
 			[ diagAt(7, 48, 7, 62) ]
 		);
 	});
 
 	test('In higher-order formula: missing variable', async () => {
-		testDiagnostics(
+		await testDiagnostics(
 			docUri,
-			[ diagAt(8, 48, 8, 80) ]
+			[ diagAt(8, 48, 8, 79) ]
 		);
 	});
 });
@@ -46,6 +47,10 @@ suite('Diagnostics: Atomic formula has no template', () => {
 
 async function testDiagnostics(docUri: vscode.Uri, expectedDiags: Diag[]) {
 	const editor = await activate(docUri);
+	await vscode.commands.executeCommand(
+		'vscode.provideDocumentSemanticTokensLegend',
+		docUri
+	);
 	const diags = await vscode.languages.getDiagnostics(docUri);
 
 	const message = 

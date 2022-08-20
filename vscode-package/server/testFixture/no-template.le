@@ -1,9 +1,0 @@
-the templates are:
-*a person* goes on holiday to *a location*.
-*a person* leaves work for the reason that *a reason*.
-
-the knowledge base Diagnostics includes:
-	fred bloggs go
-	fred bloggs goes on holiday to
-	fred bloggs leaves work for the reason that fred bloggs go
-	fred bloggs leaves work for the reason that fred bloggs goes on holiday to 

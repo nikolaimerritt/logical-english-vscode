@@ -8,8 +8,8 @@ suite('Semantic tokens', () => {
 		await testSemanticTokens(
 			docUri,
 			[
-				Token.ofVariable(4, 0, 'bob frank'),
-				Token.ofVariable(4, 18, 'lisbon')
+				Token.variable(4, 0, 'bob frank'),
+				Token.variable(4, 18, 'lisbon')
 			]
 		);
 	});
@@ -65,7 +65,7 @@ class Token {
 			&& this.tokenType === other.tokenType;
 	}
 
-	public static ofVariable(line: number, char: number, name: string) {
+	public static variable(line: number, char: number, name: string) {
 		return new Token(
 			line,
 			char, 
