@@ -20,6 +20,7 @@ export function completions(text: string, params: TextDocumentPositionParams): C
 	completions.push(...literalCompletion(text, params.position));
 
 	return completions.slice(0, 3);
+	// return dummyCompletions();
 }
 
 
@@ -150,4 +151,17 @@ function headerCompletions(document: string, position: Position,  typeChecking: 
 	}
 
 	return completions;
+}
+
+function dummyCompletions(): CompletionItem[] {
+	return [
+		{
+			label: 'JavaScript',
+			kind: CompletionItemKind.Text
+		},
+		{
+			label: 'TypeScript',
+			kind: CompletionItemKind.Text
+		}
+	];
 }

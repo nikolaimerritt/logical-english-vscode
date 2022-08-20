@@ -1,4 +1,6 @@
 import { DocumentUri, TextDocument } from 'vscode-languageserver-textdocument';
+import * as vscode from 'vscode';
+import * as path from 'path';
 
 export function everySublistOf<T>(list: T[], minLength = 2) {
 	return everySublistRec(list)
@@ -60,6 +62,46 @@ export function countOccurances(text: string, substring: string): number {
 	return text.split(substring).length - 1;
 }
 
-export async function activateDoc(docuUri: DocumentUri) {
-	
+export let doc: vscode.TextDocument;
+export let editor: vscode.TextEditor;
+
+
+export async function activate(docUri: vscode.Uri): Promise<vscode.TextEditor | undefined> {
+	const extensionName = 'NikolaiMerritt.logical-english-vscode';
+	const extension = vscode.extensions.getExtension(extensionName)!;
+	if (extension === undefined)
+		console.error(`Could not find extension with name '${extensionName}'`);
+
+	await extension.activate();
+
+	try {
+		doc = await vscode.workspace.openTextDocument(docUri);
+		editor = await vscode.window.showTextDocument(doc);
+		return editor;
+	}
+	catch (error) {
+		console.error(error);
+	}
+
+	return undefined;
+}
+
+async function sleep(ms: number) {
+	return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+export function getDocPath(p: string) {
+	return path.resolve(__dirname, '../../../testFixture', p);
+}
+
+export function getDocUri(p: string) {
+	return vscode.Uri.file(getDocPath(p));
+}
+
+export async function setTestContent(content: string) {
+	const all = new vscode.Range(
+		doc.positionAt(0),
+		doc.positionAt(doc.getText().length)
+	);
+	return editor.edit(editBuilder => editBuilder.replace(all, content));
 }
