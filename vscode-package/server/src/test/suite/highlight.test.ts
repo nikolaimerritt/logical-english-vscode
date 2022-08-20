@@ -2,15 +2,21 @@ import * as vscode from 'vscode';
 import * as assert from 'assert';
 import { getDocUri, activate, positionToString, makeRange, equalRange } from './helper';
 
-suite('Highlighting', () => {
-	test('Semantic highlighting', async () => {
+suite('Semantic tokens', () => {
+	test('Semantic tokens from a short document', async () => {
 		const docUri = getDocUri('highlight.le');
-		await testHighlights(docUri);
+		await testSemanticTokens(
+			docUri,
+			[
+				Token.ofVariable(4, 0, 'bob frank'),
+				Token.ofVariable(4, 18, 'lisbon')
+			]
+		);
 	});
 });
 
 
-async function testHighlights(docUri: vscode.Uri) {
+async function testSemanticTokens(docUri: vscode.Uri, expectedTokens: Token[]) {
 	const editor = await activate(docUri);
 	const tokenTypesLegend = (await vscode.commands.executeCommand(
 			'vscode.provideDocumentSemanticTokensLegend',
@@ -23,10 +29,22 @@ async function testHighlights(docUri: vscode.Uri) {
 		docUri
 	) as vscode.SemanticTokens;
 
-
 	const tokens = Token.fromData(tokenTypesLegend, tokensData);
-	assert.equal(JSON.stringify(tokens), 'tokens!');
+	const message = `
+In file ${docUri.path},
+expected tokens 
+${expectedTokens.map(t => t.toString()).join('\n')}
+received tokens 
+${tokens.map(t => t.toString()).join('\n')}
+`;
+
+	assert.equal(expectedTokens.length, tokens.length, message);
+	expectedTokens.forEach((expectedToken, idx) => {
+		assert.ok(expectedToken.equal(tokens[idx]), message);
+	});
 }
+
+
 
 class Token {
 	constructor(
@@ -35,6 +53,26 @@ class Token {
 		public readonly length: number,
 		public readonly tokenType: string
 	) { }
+
+	public toString() {
+		return `'${this.tokenType}' at line ${this.line} from char ${this.char} to char ${this.char + this.length}`;
+	}
+
+	public equal(other: Token) {
+		return this.line === other.line
+			&& this.char === other.char
+			&& this.length === other.length
+			&& this.tokenType === other.tokenType;
+	}
+
+	public static ofVariable(line: number, char: number, name: string) {
+		return new Token(
+			line,
+			char, 
+			name.length,
+			'variable'
+		);
+	}
 
 	// data is of form { '0': number, '1': number, '2': number, ... }
 	// according to https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_semanticTokens
