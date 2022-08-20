@@ -55,7 +55,6 @@ function literalCompletion(text: string, position: Position): CompletionItem[] {
 	};
 
 	const maxCompletions = 3;
-	const scoreThreshold = 2;
 	const templates = templatesInDocument(text);
 	const bestTemplatesWithScores = sortBy(
 		templates

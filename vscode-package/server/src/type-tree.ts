@@ -109,12 +109,20 @@ function find(start: Type, predicate: (type: Type) => boolean): Type | undefined
 		return start;
 	
 	for (const subtype of start.subtypes) {
-		if (find(subtype, predicate) !== undefined)
-			return subtype;
+		const found = find(subtype, predicate);
+		if (found !== undefined)
+			return found;
 	}
 
 	return undefined;
 }
+
+/*
+a thing
+	a predicate
+	a person
+		an employee
+*/
 
 
 // returns all lines that are subtype to lines[0]

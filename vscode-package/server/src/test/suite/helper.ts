@@ -86,15 +86,15 @@ export async function activate(docUri: vscode.Uri): Promise<vscode.TextEditor | 
 	return undefined;
 }
 
-async function sleep(ms: number) {
+export async function sleep(ms: number) {
 	return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export function getDocPath(p: string) {
-	return path.resolve(__dirname, '../../../testFixture', p);
+export function getDocPath(p: string[]) {
+	return path.resolve(__dirname, '../../../testFixture', ...p);
 }
 
-export function getDocUri(p: string) {
+export function getDocUri(...p: string[]) {
 	return vscode.Uri.file(getDocPath(p));
 }
 
@@ -104,4 +104,31 @@ export async function setTestContent(content: string) {
 		doc.positionAt(doc.getText().length)
 	);
 	return editor.edit(editBuilder => editBuilder.replace(all, content));
+}
+
+export function positionToString(position: { line: number, character: number }) {
+	return `(line = ${position.line}, char = ${position.character})`;
+}
+
+export function makeRange(startLine: number, startChar: number, endLine: number, endChar: number): vscode.Range {
+	return new vscode.Range(
+		new vscode.Position(startLine, startChar), 
+		new vscode.Position(endLine, endChar)
+	);
+}
+
+export function equalPosition(position: vscode.Position, otherPosition: vscode.Position) {
+	return position.line === otherPosition.line 
+	&& position.character === otherPosition.character;
+}
+
+
+export function equalRange(range: vscode.Range, otherRange: vscode.Range) {
+	return equalPosition(range.start, otherRange.start) 
+	&& equalPosition(range.end, otherRange.end);
+}
+
+export function objectToArray(object: any): any[] {
+	return Object.keys(object)
+	.map(key => [Number(key), object[key]]);
 }

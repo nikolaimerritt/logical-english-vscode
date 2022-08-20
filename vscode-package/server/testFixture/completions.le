@@ -1,0 +1,18 @@
+%type checking: on
+the type hierarchy is:
+a person
+	an employee
+
+the templates are:
+*a person* takes a week off work.
+*an employee* works for *a person*.
+a week off work is taken by *an employee* due to *a reason*.
+*an employee* wants to go to *a location*.
+
+the knowledge base Small includes: 
+fred bloggs tak
+mike wor
+a wee
+
+a week off work is taken by fred bloggs due to fred bloggs wants t
+bob works for bill.

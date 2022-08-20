@@ -26,7 +26,7 @@ export const globalSettings: ExampleSettings = {
 	maxNumberOfProblems: 1000
 };
 
-export const literalHasNoTemplateMessage = "Literal has no template.";
+export const atomicFormulaHasNoTemplateMessage = "Atomic formula has no template.";
 export const clauseHasMisalignedConnectivesMessage = 'Clause has misaligned connectives.';
 
 export function diagnostics(document: string): Diagnostic[] {	
@@ -65,7 +65,7 @@ function literalHasNoTemplateDiags(schema: Schema, text: string): Diagnostic[] {
 			diagnostics.push({
 				severity: DiagnosticSeverity.Warning,
 				range,
-				message: literalHasNoTemplateMessage
+				message: atomicFormulaHasNoTemplateMessage
 			});
 
 	return diagnostics;

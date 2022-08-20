@@ -1,0 +1,7 @@
+the templates are:
+*a person* goes on holiday to *a location*.
+
+the knowledge base QuickFixes includes:
+fred bloggs goes on holiday to new york if
+	kim wexler goes on holiday to new york
+	and fred bloggs has married kim wexler.

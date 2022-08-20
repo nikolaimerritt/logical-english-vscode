@@ -1,7 +1,7 @@
 import { CodeAction, CodeActionParams, DiagnosticSeverity, CodeActionKind, Position, Range } from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { Template } from './template';
-import { literalHasNoTemplateMessage } from './diagnostics';
+import { atomicFormulaHasNoTemplateMessage } from './diagnostics';
 import { ignoreComments } from './utils';
 import { 
 	formulasInDocument, 
@@ -62,7 +62,7 @@ function literalWithNoTemplateFixes(params: CodeActionParams, schema: Schema, do
 	
 	const actions: CodeAction[] = [];
 	params.context.diagnostics.forEach(diag => {
-		if (diag.severity === DiagnosticSeverity.Warning && diag.message.includes(literalHasNoTemplateMessage)) {
+		if (diag.severity === DiagnosticSeverity.Warning && diag.message.includes(atomicFormulaHasNoTemplateMessage)) {
 			actions.push({
 				title: 'Generate a template',
 				kind: CodeActionKind.QuickFix,
