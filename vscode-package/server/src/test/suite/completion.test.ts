@@ -40,6 +40,9 @@ suite('Completions', () => {
 	});
 });
 
+
+
+
 function completionsToString(completions: vscode.CompletionItem[]) {
 	return completions.map(({ label }) => `'${label}'`).join('\n');
 }

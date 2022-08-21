@@ -1,5 +1,8 @@
 the templates are:
 *a person* goes to *a location*.
+*a person* gets to know that *a fact*.
 
 the knowledge base Highlight includes:
 bob frank goes to lisbon.
+steve odoherty gets to know that the fact.
+will i am gets to know that steve odoherty goes to lisbon.

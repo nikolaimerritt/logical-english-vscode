@@ -3,13 +3,34 @@ import * as assert from 'assert';
 import { getDocUri, activate, positionToString, makeRange, equalRange } from './helper';
 
 suite('Semantic tokens', () => {
-	test('Semantic tokens from a short document', async () => {
-		const docUri = getDocUri('highlight.le');
+	const docUri = getDocUri('highlight.le');
+	test('Highlighting when atomic formulas fully match template', async () => {
 		await testSemanticTokens(
 			docUri,
 			[
-				Token.variable(4, 0, 'bob frank'),
-				Token.variable(4, 18, 'lisbon')
+				Token.variable(5, 0, 'bob frank'),
+				Token.variable(5, 18, 'lisbon')
+			]
+		);
+	});
+
+	test('Highlighting HOAF when HOAF fullly matches template', async () => {
+		await testSemanticTokens(
+			docUri,
+			[
+				Token.variable(6, 0, 'steve odoherty'),
+				Token.variable(6, 33, 'the fact')
+			]
+		);
+	});
+
+	test('Highlighting HOAF and sub-formula when HOAF fullly matches template', async () => {
+		await testSemanticTokens(
+			docUri,
+			[
+				Token.variable(7, 0, 'will i am'),
+				Token.variable(7, 28, 'steve odoherty'),
+				Token.variable(7, 51, 'lisbon'),
 			]
 		);
 	});
@@ -38,15 +59,21 @@ received tokens
 ${tokens.map(t => t.toString()).join('\n')}
 `;
 
-	assert.equal(expectedTokens.length, tokens.length, message);
-	expectedTokens.forEach((expectedToken, idx) => {
-		assert.ok(expectedToken.equal(tokens[idx]), message);
-	});
+	assert.ok(expectedTokens.length <= tokens.length, message);
+
+	for (const expectedToken of expectedTokens) {
+		const actualToken = tokens
+		.find(t => t.equal(expectedToken));
+
+		assert.ok(actualToken, message);
+	}
 }
 
 
 
 class Token {
+	private static maxUint32 = 4294967295;
+
 	constructor(
 		public readonly line: number,
 		public readonly char: number,
@@ -77,20 +104,30 @@ class Token {
 	// data is of form { '0': number, '1': number, '2': number, ... }
 	// according to https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_semanticTokens
 	public static fromData(tokenTypesLegend: string[], data: any): Token[] {
-		const dataArray = Token.dataToArray(data);
+		const dataArray = Token.dataToArray(data)
+		.map(int => {
+			if (int > 10000)
+				return Token.maxUint32 - int;
+			return int;
+		});
 		const tokens: Token[] = [];
 
 		let line = 0;
 		let char = 0;
-		for (let i = 0; i < dataArray.length / 5; i++) {
+		for (let i = 0; i < Math.floor(dataArray.length / 5); i++) {
 			const deltaLine = dataArray[5 * i];
 			const deltaChar = dataArray[5 * i + 1];
 			const length = dataArray[5 * i + 2];
 			const tokenType = dataArray[5 * i + 3];
 			// ignore token modifier, at 5 * i + 4
 
-			line += deltaLine;
-			char += deltaChar;
+			if (deltaLine === 0)
+				char += deltaChar;
+			else {
+				char = deltaChar;
+				line += deltaLine;
+			}
+
 
 			tokens.push(new Token(line, char, length, tokenTypesLegend[tokenType]));
 		}
@@ -99,6 +136,10 @@ class Token {
 	}
 
 	private static dataToArray(data: any): number[] {
-		return Array.from(Object.values(data.data));
+		data = data.data;
+		const values = Object.values(data);
+		const array = Array.from(values);
+		const numArray = array.map(Number);
+		return numArray;
 	}
 }
