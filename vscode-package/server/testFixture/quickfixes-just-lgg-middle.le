@@ -1,0 +1,16 @@
+%type checking: on
+the type hierarchy is:
+an abode
+	a house
+		a mansion
+	a flat
+
+the templates are:
+*a person* goes on holiday to *a location*.
+*a person* lives in *an abode*.
+*a peson* wants to buy *a mansion*.
+
+the knowledge base QuickFixes includes:
+fred bloggs goes on holiday to los angeles if
+	he knows the plane tickets are affordable
+	and he knows the buses there are affordable.

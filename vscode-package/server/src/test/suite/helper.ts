@@ -117,6 +117,10 @@ export function makeRange(startLine: number, startChar: number, endLine: number,
 	);
 }
 
+export function rangeOfWord(startLine: number, startChar: number, word: string): vscode.Range {
+	return makeRange(startLine, startChar, startLine, startChar + word.length);
+}
+
 export function equalPosition(position: vscode.Position, otherPosition: vscode.Position) {
 	return position.line === otherPosition.line 
 	&& position.character === otherPosition.character;

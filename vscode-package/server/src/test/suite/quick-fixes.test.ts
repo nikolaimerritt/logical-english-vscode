@@ -1,18 +1,82 @@
 import * as vscode from 'vscode';
 import * as assert from 'assert';
-import { getDocUri, activate, positionToString, makeRange, equalRange } from './helper';
+import { getDocUri, activate, positionToString, makeRange, equalRange, rangeOfWord } from './helper';
 
-suite('Template Generation Quick Fixes', () => {
-	const docUri = getDocUri('quick-fixes.le');
-	
+suite('Template Generation Quick Fixes', () => {	
 	test('Re-using term: term defined before atomic formula', async () => {
 		await testQuickFixes(
-			docUri,
-			makeRange(6, 8, 6, 42), 
+			getDocUri('quickfixes-vari.le'),
+			rangeOfWord(6, 8, 'fred bloggs has married kim wexler'),
 			{
 				range: makeRange(2, 0, 2, 0),
 				newText: '*a person* has married *a person*'
 			}
+		);
+	});
+
+	test('Re-using term: terms type is top of hierarchy', async () => {
+		await testQuickFixes(
+			getDocUri('quickfixes-top.le'),
+			rangeOfWord(15, 8, 'fred bloggs becomes fed up of the hovel'),
+			{
+				range: makeRange(11, 0, 11, 0),
+				newText: '*a person* becomes fed up of *an abode*.'
+			},
+		);
+	});
+
+	test('Re-using term: terms type is bottom of hierarchy', async () => {
+		await testQuickFixes(
+			getDocUri('quickfixes-bottom.le'),
+			rangeOfWord(15, 8, 'fred bloggs becomes fed up of the white house'),
+			{
+				range: makeRange(11, 0, 11, 0),
+				newText: '*a person* becomes fed up of *a mansion*.'
+			},
+		);
+	});
+
+	test('Re-using term: terms type is middle of hierarchy', async () => {
+		await testQuickFixes(
+			getDocUri('quickfixes-middle.le'),
+			rangeOfWord(15, 8, 'fred bloggs becomes fed up of 221b baker street'),
+			{
+				range: makeRange(11, 0, 11, 0),
+				newText: '*a person* becomes fed up of *a house*.'
+			},
+		);
+	});
+
+	test('LGG: one varying term in middle of atomic formula', async () => {
+		await testQuickFixes(
+			getDocUri('quickfixes-just-lgg-middle.le'),
+			rangeOfWord(15, 4, 'he knows the plane tickets are affordable'),
+			{
+				range: makeRange(11, 0, 11, 0),
+				newText: 'he knows the *an X* are affordable.'
+			},
+		);
+	});
+
+	test('LGG: three varying term at start, middle, end of atomic formula', async () => {
+		await testQuickFixes(
+			getDocUri('quickfixes-just-lgg-everywhere.le'),
+			rangeOfWord(15, 4, 'he knows the plane tickets are affordable'),
+			{
+				range: makeRange(11, 0, 11, 0),
+				newText: '*an X* knows the *a Y* are *a Z*.'
+			},
+		);
+	});
+
+	test('LGG: terms are multiple words long', async () => {
+		await testQuickFixes(
+			getDocUri('quickfixes-just-lgg-longer.le'),
+			rangeOfWord(15, 4, 'he knows the plane tickets are affordable'),
+			{
+				range: makeRange(11, 0, 11, 0),
+				newText: '*an X* knows the *a Y* are *a Z*.'
+			},
 		);
 	});
 });
