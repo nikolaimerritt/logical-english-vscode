@@ -1,8 +1,12 @@
 the templates are:
 *a person* goes to *a location*.
 *a person* gets to know that *a fact*.
+*a merchant* ships *an item*.
+*a person* sees *a person* because *a person* wants to see *a person*.
 
 the knowledge base Highlight includes:
-bob frank goes to lisbon.
-steve odoherty gets to know that the fact.
-will i am gets to know that steve odoherty goes to lisbon.
+	bob frank goes to lisbon.
+	steve odoherty gets to know that the fact.
+	will i am gets to know that steve odoherty goes to lisbon.
+	merchant mike ships ships.
+	merchant mike sees bob spence because bob spence wants to see merchant mike.

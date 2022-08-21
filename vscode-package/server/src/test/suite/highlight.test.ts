@@ -4,12 +4,13 @@ import { getDocUri, activate, positionToString, makeRange, equalRange } from './
 
 suite('Semantic tokens', () => {
 	const docUri = getDocUri('highlight.le');
+	const kbBeginningLine = 7;
 	test('Highlighting when atomic formulas fully match template', async () => {
 		await testSemanticTokens(
 			docUri,
 			[
-				Token.variable(5, 0, 'bob frank'),
-				Token.variable(5, 18, 'lisbon')
+				Token.variable(kbBeginningLine, 1, 'bob frank'),
+				Token.variable(kbBeginningLine, 19, 'lisbon')
 			]
 		);
 	});
@@ -18,8 +19,8 @@ suite('Semantic tokens', () => {
 		await testSemanticTokens(
 			docUri,
 			[
-				Token.variable(6, 0, 'steve odoherty'),
-				Token.variable(6, 33, 'the fact')
+				Token.variable(kbBeginningLine + 1, 1, 'steve odoherty'),
+				Token.variable(kbBeginningLine + 1, 34, 'the fact')
 			]
 		);
 	});
@@ -28,9 +29,31 @@ suite('Semantic tokens', () => {
 		await testSemanticTokens(
 			docUri,
 			[
-				Token.variable(7, 0, 'will i am'),
-				Token.variable(7, 28, 'steve odoherty'),
-				Token.variable(7, 51, 'lisbon'),
+				Token.variable(kbBeginningLine + 2, 1, 'will i am'),
+				Token.variable(kbBeginningLine + 2, 29, 'steve odoherty'),
+				Token.variable(kbBeginningLine + 2, 52, 'lisbon'),
+			]
+		);
+	});
+
+	test('Highlighting term that appears as surrounding', async () => {
+		await testSemanticTokens(
+			docUri,
+			[
+				Token.variable(kbBeginningLine + 3, 1, 'merchant mike'),
+				Token.variable(kbBeginningLine + 3, 21, 'ships'),
+			]
+		);
+	});
+
+	test('Highlighting term that appears multiple times', async () => {
+		await testSemanticTokens(
+			docUri,
+			[
+				Token.variable(kbBeginningLine + 4, 1, 'merchant mike'),
+				Token.variable(kbBeginningLine + 4, 20, 'bob spence'),
+				Token.variable(kbBeginningLine + 4, 39, 'bob spence'),
+				Token.variable(kbBeginningLine + 4, 63, 'merchant mike'),
 			]
 		);
 	});

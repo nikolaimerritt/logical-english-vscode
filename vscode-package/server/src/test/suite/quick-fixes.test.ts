@@ -79,6 +79,17 @@ suite('Template Generation Quick Fixes', () => {
 			},
 		);
 	});
+
+	test('Reuse + LGG', async () => {
+		await testQuickFixes(
+			getDocUri('quickfixes-reuse-lgg.le'),
+			rangeOfWord(15, 4, 'fred bloggs knows the plane tickets are affordable'),
+			{
+				range: makeRange(11, 0, 11, 0),
+				newText: '*a person* knows the *an X* are *a Y*.'
+			},
+		);
+	});
 });
 
 
