@@ -1,29 +1,73 @@
 // initially taken from https://github.com/microsoft/vscode-extension-samples/blob/main/helloworld-test-sample/src/test/suite/extension.test.ts
 
 import * as assert from 'assert';
+import { Type } from '../../element';
 
 // You can import and use all API from the 'vscode' module
 // as well as import your extension to test it
 // import * as myExtension from '../../extension';
 import { TypeTree } from '../../type-tree';
 
-// suite('TypeTree.toString()', () => {
-// 	test('Type tree to string', () => {
-// 		const string = `
-// a parent
-// 	a B
-// 	a C
-// 		a C1
-// 		a C2
-// 		a C3
-// 	a D
-// 		a D1
+suite('TypeTree.fromHierarchy()', () => {
+	test('Multiple highest-level (all new) nodes in hierarchy', () => {
+		const hierarchy = `
+a parent
+	a B
+	a C
+		a C1
+		a C2
+		a C3
+	a D
+		a D1
 
-// a nother parent
-// 		`.trim();
-// 		const hierarchy = string.split('\n');
+a nother parent
+		`.split('\n');
+		const testTree = TypeTree.fromHierarchy(hierarchy);
 
-// 		const tree = TypeTree.fromHierarchy(hierarchy);
-// 		assert.strictEqual(tree.toString().trim(), string);
-// 	});
-// });
+		const actualTree = new TypeTree();
+		actualTree.getType('a parent').makeSubtype(new Type('a B'));
+		actualTree.getType('a parent').makeSubtype(new Type('a C'));
+			actualTree.getType('a C').makeSubtype(new Type('a C1'));
+			actualTree.getType('a C').makeSubtype(new Type('a C2'));
+			actualTree.getType('a C').makeSubtype(new Type('a C3'));
+
+		actualTree.getType('a parent').makeSubtype(new Type('a D'));
+			actualTree.getType('a D').makeSubtype(new Type('a D1'));
+		
+		actualTree.getType('a nother parent');
+
+		assert.ok(actualTree.equals(testTree));
+	});
+
+	test('Use of top type in hierarchy', () => {
+		const hierarchy = `
+a thing
+	a B
+	a C
+		a C1
+		a C2
+		a C3
+	a D
+		a D1
+
+	a nother parent
+		`.split('\n');
+		const testTree = TypeTree.fromHierarchy(hierarchy);
+
+		const actualTree = new TypeTree();
+		// actualTree.getType('a thing').makeSubtype(new Type('a B'));
+		// actualTree.getType('a thing').makeSubtype(new Type('a C'));
+		actualTree.getType('a B');
+		actualTree.getType('a C');
+			actualTree.getType('a C').makeSubtype(new Type('a C1'));
+			actualTree.getType('a C').makeSubtype(new Type('a C2'));
+			actualTree.getType('a C').makeSubtype(new Type('a C3'));
+
+		actualTree.getType('a thing').makeSubtype(new Type('a D'));
+			actualTree.getType('a D').makeSubtype(new Type('a D1'));
+		
+		actualTree.getType('a nother parent');
+
+		assert.ok(actualTree.equals(testTree));
+	});
+});

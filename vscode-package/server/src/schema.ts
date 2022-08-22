@@ -26,7 +26,7 @@ export class Schema {
 		);
 	}
 
-	public parseFormula(formula: string, formulaType = this.typeTree.predicateTopType): AtomicFormula | TemplatelessFormula {
+	public parseFormula(formula: string, formulaType = this.typeTree.getPredicateTopType()): AtomicFormula | TemplatelessFormula {
 		// const formulaEls = this.parseElements(formula);
 		// if (formulaEls.length === 0)
 		// 	return new TemplatelessFormula(formula, formulaType);

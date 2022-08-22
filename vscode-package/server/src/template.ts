@@ -259,7 +259,7 @@ export class Template {
 
 	public parseFormula(typeTree: TypeTree, formula: string): AtomicFormula {
 		const elements = this.parseElements(formula);
-		return new AtomicFormula(typeTree.predicateTopType, elements);
+		return new AtomicFormula(typeTree.getPredicateTopType(), elements);
 	}
 
 	private parseElements(formula: string): FormulaElement[] {

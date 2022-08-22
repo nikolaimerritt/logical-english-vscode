@@ -78,3 +78,7 @@ export function ignoreComments(text: string): string {
 export function paddedString(num: number, length = 4): string {
 	return String(num).padStart(length, '0');
 }
+
+export function countOccurances(text: string, substring: string): number {
+	return text.split(substring).length - 1;
+}

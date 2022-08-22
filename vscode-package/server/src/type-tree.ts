@@ -1,19 +1,25 @@
 import { Template } from './template';
 import { Type } from './element';
+import { countOccurances, sortBy } from './utils';
 
 export const dummyType = new Type('dummy', []);
 
+interface IndentedTypeName {
+	name: string,
+	indent: number
+}
+
 export class TypeTree {
 	public readonly topType: Type;
-	public readonly predicateTopType: Type;
+	// public readonly predicateTopType: Type;
 
 	private static readonly topTypeName = 'a thing';
 	private static readonly predicateTopTypeName = 'a predicate';
 
-	constructor(root: Type = new Type(TypeTree.topTypeName)) {
+	constructor(root = new Type(TypeTree.topTypeName)) {
 		this.topType = root;
-		this.predicateTopType = new Type(TypeTree.predicateTopTypeName);
-		this.topType.makeSubtype(this.predicateTopType);
+		// this.predicateTopType = new Type(TypeTree.predicateTopTypeName);
+		// this.topType.makeSubtype(this.predicateTopType);
 	}
 
 
@@ -28,14 +34,22 @@ export class TypeTree {
 		return newType;
 	}
 
+	public getPredicateTopType(): Type {
+		return this.getType(TypeTree.predicateTopTypeName);
+	}
+
 	public addType(name: string) {
 		this.getType(name);
 	}
+
+	public equals(other: TypeTree) {
+		return TypeTree.treesEqual(this.topType, other.topType);
+	}
 	
 
-	public toString(): string {
-		return this.buildStringRepresentation();
-	}
+	// public toString(): string {
+	// 	return this.buildStringRepresentation();
+	// }
 
 	public addTypesFromTemplate(template: Template) {
 		for (const type of template.types) {
@@ -57,13 +71,18 @@ export class TypeTree {
 		
 		for (let i = 0; i < hierarchy.length; i++) {
 			if (!indentedRegex.test(hierarchy[i])) {
-				const parent = new Type(hierarchy[i].trim());
+
+				const parentName = hierarchy[i].trim();
+				let parent = find(tree.topType, p => p.name === parentName);
+				if (parent === undefined) {
+					parent = new Type(parentName);
+					tree.topType.makeSubtype(parent);
+				}
+
 				if (i + 1 < hierarchy.length && indentedRegex.test(hierarchy[i + 1])) {
 					const subtypeLines = subtypeSection(hierarchy.slice(i, undefined));
 					this.populateFromHierarchy(parent, subtypeLines);
 				}
-				
-				tree.topType.makeSubtype(parent);
 			}
 		}
 
@@ -80,22 +99,86 @@ export class TypeTree {
 
 		for (let i = 0; i < subtypeLines.length; i++) {
 			if (indentationOf(subtypeLines[i]) === childIndent) {
-				const child = new Type(subtypeLines[i].trim());
+				const childName = subtypeLines[i].trim();
+				
+				let child = find(root, t => t.name === childName);
+				if (child === undefined) {
+					child = new Type(childName);
+					root.makeSubtype(child);
+				}
+				
 				const subchildLines = subtypeSection(subtypeLines.slice(i, undefined));
 				TypeTree.populateFromHierarchy(child, subchildLines);
-				root.makeSubtype(child);
 			}
 		}
 	}
 
-	private buildStringRepresentation(start = this.topType): string {
-		const indent = '#';
-		let repr = start.name + '\n';
-		for (const sub of start.subtypes)
-			repr += indent + this.buildStringRepresentation(sub);
+	private static treesEqual(first: Type, second: Type) {
+		if (first.name !== second.name)
+			return false;
 		
-		return repr;
+		if (first.subtypes.length !== second.subtypes.length)
+			return false;
+		
+		for (const firstChild of first.subtypes) {
+			const secondChild = second.subtypes
+			.find(s => s.name === firstChild.name);
+
+			if (secondChild === undefined)
+				return false;
+			
+			if (!TypeTree.treesEqual(firstChild, secondChild))
+				return false;
+		}
+
+		return true;
 	}
+
+	// private buildStringRepresentation(start = this.topType): string {
+	// 	const indent = '#';
+	// 	let repr = start.name + '\n';
+	// 	for (const sub of start.subtypes)
+	// 		repr += indent + this.buildStringRepresentation(sub);
+		
+	// 	return repr;
+	// }
+
+	// private static linesToIndentedName(lines: string[]): IndentedTypeName[] {
+	// 	const indentedNames: IndentedTypeName[] = [];
+	// 	const typeLines = lines
+	// 	.filter(/\w+/.test);
+
+	// 	const sortedIndents = sortBy(
+	// 		typeLines
+	// 			.map(TypeTree.indentOf)
+	// 			.filter(indent => indent.length > 0),
+	// 		indent => indent.length
+	// 	);
+
+
+	// 	if (sortedIndents.length > 0) {
+	// 		const leastIndent = sortedIndents[0];
+	// 		return typeLines.map(line => ({
+	// 			name: line.trim(),
+	// 			indent: countOccurances(this.indentOf(line), leastIndent)
+	// 		} as IndentedTypeName));
+	// 	}
+	// 	else {
+	// 		return typeLines.map(line => ({
+
+	// 		}));
+	// 	}
+		
+		
+	// }
+
+	// private static indentOf(line: string): string {
+	// 	const indentRegex = /^\s+(?=\w.*)/m;
+	// 	const match = line.match(indentRegex);
+	// 	if (match === null) 
+	// 		return '';
+	// 	return match[0];
+	// }
 }
 
 
@@ -147,3 +230,4 @@ function indentationOf(line: string): string {
 	
 	return indent[0];
 }
+

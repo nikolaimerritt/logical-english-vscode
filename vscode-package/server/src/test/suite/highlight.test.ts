@@ -4,13 +4,13 @@ import { getDocUri, activate, positionToString, makeRange, equalRange } from './
 
 suite('Semantic tokens', () => {
 	const docUri = getDocUri('highlight.le');
-	const kbBeginningLine = 7;
+	const kbStart = 7;
 	test('Highlighting when atomic formulas fully match template', async () => {
 		await testSemanticTokens(
 			docUri,
 			[
-				Token.variable(kbBeginningLine, 1, 'bob frank'),
-				Token.variable(kbBeginningLine, 19, 'lisbon')
+				Token.variable(kbStart, 1, 'bob frank'),
+				Token.variable(kbStart, 19, 'lisbon')
 			]
 		);
 	});
@@ -19,8 +19,8 @@ suite('Semantic tokens', () => {
 		await testSemanticTokens(
 			docUri,
 			[
-				Token.variable(kbBeginningLine + 1, 1, 'steve odoherty'),
-				Token.variable(kbBeginningLine + 1, 34, 'the fact')
+				Token.variable(kbStart + 1, 1, 'steve odoherty'),
+				Token.variable(kbStart + 1, 34, 'the fact')
 			]
 		);
 	});
@@ -29,9 +29,9 @@ suite('Semantic tokens', () => {
 		await testSemanticTokens(
 			docUri,
 			[
-				Token.variable(kbBeginningLine + 2, 1, 'will i am'),
-				Token.variable(kbBeginningLine + 2, 29, 'steve odoherty'),
-				Token.variable(kbBeginningLine + 2, 52, 'lisbon'),
+				Token.variable(kbStart + 2, 1, 'will i am'),
+				Token.variable(kbStart + 2, 29, 'steve odoherty'),
+				Token.variable(kbStart + 2, 52, 'lisbon'),
 			]
 		);
 	});
@@ -40,8 +40,8 @@ suite('Semantic tokens', () => {
 		await testSemanticTokens(
 			docUri,
 			[
-				Token.variable(kbBeginningLine + 3, 1, 'merchant mike'),
-				Token.variable(kbBeginningLine + 3, 21, 'ships'),
+				Token.variable(kbStart + 3, 1, 'merchant mike'),
+				Token.variable(kbStart + 3, 21, 'ships'),
 			]
 		);
 	});
@@ -50,10 +50,10 @@ suite('Semantic tokens', () => {
 		await testSemanticTokens(
 			docUri,
 			[
-				Token.variable(kbBeginningLine + 4, 1, 'merchant mike'),
-				Token.variable(kbBeginningLine + 4, 20, 'bob spence'),
-				Token.variable(kbBeginningLine + 4, 39, 'bob spence'),
-				Token.variable(kbBeginningLine + 4, 63, 'merchant mike'),
+				Token.variable(kbStart + 4, 1, 'merchant mike'),
+				Token.variable(kbStart + 4, 20, 'bob spence'),
+				Token.variable(kbStart + 4, 39, 'bob spence'),
+				Token.variable(kbStart + 4, 63, 'merchant mike'),
 			]
 		);
 	});
