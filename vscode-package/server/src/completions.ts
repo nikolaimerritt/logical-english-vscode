@@ -103,7 +103,7 @@ function headerCompletions(document: string, position: Position,  typeChecking: 
 				label: typeHierarchyHeader,
 				kind: CompletionItemKind.Text,
 				insertTextFormat: InsertTextFormat.PlainText,
-				textEdit: TextEdit.replace(lineRange, templatesHeader),
+				textEdit: TextEdit.replace(lineRange, typeHierarchyHeader),
 				sortText: paddedString(priority++)
 			});
 		}

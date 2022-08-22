@@ -1,0 +1,17 @@
+%type checking: on
+the type hierarchy is:
+a person
+    a driver
+    a passenger
+
+the templates are:
+*a person* goes on holiday to *a resort*.
+a friend of *a person* is *a person*.
+*a person* says that *a statement*.
+*a resort* has warm weather.
+*a driver* offers *a passenger* a lift to *a resort*.
+
+the knowledge base Holidays includes:
+fred tosh goes on holiday to sandy stones if
+    a friend of fred tosh is amy smith
+    and amy smith offers fred tosh a lift to sandy stones.

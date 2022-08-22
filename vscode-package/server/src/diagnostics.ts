@@ -12,7 +12,7 @@ import {
 	typeTreeInDocument, 
 	typeCheckingEnabled
 } from './parsing';
-import { ignoreComments } from './utils';
+import { ignoreComments, isSamePosition, isSameRange } from './utils';
 import { Template } from './template';
 import { Type } from './element';
 import { TypeTree } from './type-tree';
@@ -61,7 +61,7 @@ export function debugOnStart() {
 function literalHasNoTemplateDiags(schema: Schema, text: string): Diagnostic[] {
 	const diagnostics: Diagnostic[] = [];	
 	for (const { content: formula, range } of formulasInDocument(schema, text))
-		if (isTemplateless(formula))
+		if (isTemplateless(formula) && diagnostics.every(d => !isSameRange(d.range, range)))
 			diagnostics.push({
 				severity: DiagnosticSeverity.Warning,
 				range,

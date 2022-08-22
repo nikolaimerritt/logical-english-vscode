@@ -1,4 +1,5 @@
 
+import { Position, Range } from 'vscode-languageserver-textdocument';
 import { connectivesRegex } from './parsing';
 
 
@@ -81,4 +82,12 @@ export function paddedString(num: number, length = 4): string {
 
 export function countOccurances(text: string, substring: string): number {
 	return text.split(substring).length - 1;
+}
+
+export function isSamePosition(first: Position, second: Position) {
+	return first.line === second.line && first.character === second.character;
+}
+
+export function isSameRange(first: Range, second: Range) {
+	return isSamePosition(first.start, second.start) && isSamePosition(first.end, second.end);
 }
