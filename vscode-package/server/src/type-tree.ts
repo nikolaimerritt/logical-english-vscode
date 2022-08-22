@@ -38,10 +38,6 @@ export class TypeTree {
 		return this.getType(TypeTree.predicateTopTypeName);
 	}
 
-	public addType(name: string) {
-		this.getType(name);
-	}
-
 	public equals(other: TypeTree) {
 		return TypeTree.treesEqual(this.topType, other.topType);
 	}

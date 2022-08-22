@@ -85,7 +85,7 @@ export function typeTreeInDocument(text: string): TypeTree {
 	if (templateLines !== undefined) {
 		for (const line of templateLines.content) {
 			for (const [typeName] of line.matchAll(typeNameRegex)) 
-				tree.addType(typeName);
+				tree.getType(typeName);
 		}
 	}
 
