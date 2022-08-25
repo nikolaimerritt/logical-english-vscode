@@ -23,7 +23,7 @@
 			"outFiles": ["${workspaceRoot}/server/out/**/*.js"]
 		},
 		{
-			"name": "Language Server Unit Test",
+			"name": "E2E + Unit Tests",
 			"type": "extensionHost",
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",

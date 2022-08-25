@@ -9,8 +9,6 @@ interface Diag {
 
 const errorMessage = 'Atomic formula has no template.';
 
-
-
 suite('Diagnostics: Atomic formula has no template', () => {
 
 	const docUri = getDocUri('notemplate.le');

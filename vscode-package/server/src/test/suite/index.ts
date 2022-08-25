@@ -1,4 +1,4 @@
-// initially taken from https://github.com/microsoft/vscode-extension-samples/blob/main/helloworld-test-sample/src/test/suite/index.ts
+// taken from https://github.com/microsoft/vscode-extension-samples/blob/main/helloworld-test-sample/src/test/suite/index.ts
 import * as path from 'path';
 import * as Mocha from 'mocha';
 import * as glob from 'glob';
