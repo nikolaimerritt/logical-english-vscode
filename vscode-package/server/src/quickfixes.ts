@@ -25,8 +25,6 @@ export function quickfixes(document: string, params: CodeActionParams): CodeActi
 }
 
 function literalWithNoTemplateFixes(params: CodeActionParams, schema: Schema, document: string): CodeAction[] {
-	const templates = templatesInDocument(document);
-	const typeTree = typeTreeInDocument(document);
 	const formulasWithNoTemplate: ContentRange<TemplatelessFormula>[] = formulasInDocument(schema, document)
 	.filter(({content: formula}) => isTemplateless(formula))
 	.map(c => c.mapContent(f => f as TemplatelessFormula));

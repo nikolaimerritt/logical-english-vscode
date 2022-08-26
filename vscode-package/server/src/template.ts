@@ -1,7 +1,7 @@
 import { deepCopy, removeBlanks, removeFirst, regexSanitise, maximal, sortBy, sanitiseLiteral } from './utils';
 import { dummyType, TypeTree } from './type-tree';
 import { Type, TemplateElement, Surrounding, ElementKind } from './element';
-import { Data, AtomicFormula, FormulaElement, Term, TermKind } from './formula';
+import { Data, AtomicFormula, FormulaElement, Term, TermKind, Variable } from './formula';
 
 
 
@@ -292,7 +292,11 @@ export class Template {
 					const type = this.elements[i - 1];
 					if (type.elementKind === ElementKind.Type) {
 						const termName = sanitiseLiteral(formula.slice(0, phraseIdx));
-						elements.push(new Data(termName, type));
+						
+						if (Variable.variablePattern.test(termName)) 
+							elements.push(new Variable(termName, type));
+						else
+							elements.push(new Data(termName, type));
 					}
 				}
 

@@ -1,16 +1,8 @@
-%type checking: on
-the type hierarchy is:
-an abode
-	a house
-		a mansion
-	a flat
-
 the templates are:
 *a person* goes on holiday to *a location*.
-*a person* lives in *an abode*.
-*a person* wants to buy *a mansion*.
+*a person* knows the *an X* are *a Y*.
 
-the knowledge base QuickFixes includes:
+the knowledge base Sister includes:
 fred bloggs goes on holiday to los angeles if
 	fred bloggs knows the plane tickets are affordable
 	and fred bloggs knows the buses there are cheap.

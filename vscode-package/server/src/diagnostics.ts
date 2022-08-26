@@ -17,6 +17,7 @@ import { Template } from './template';
 import { Type } from './element';
 import { TypeTree } from './type-tree';
 import { isTemplateless, Schema } from './schema';
+import { Term, TermKind } from './formula';
 
 export interface ExampleSettings {
 	maxNumberOfProblems: number;
@@ -95,9 +96,7 @@ function typeMismatchDiags(schema: Schema, text: string): Diagnostic[] {
 		const terms = termsInClause(schema, clause);
 		for (let i = 0; i < terms.length; i++) {
 			for (let j = i + 1; j < terms.length; j++) {
-				if (terms[i].content.name === terms[j].content.name 
-						&& !TypeTree.areCompatibleTypes(terms[i].content.type, terms[j].content.type)) {
-					
+				if (typeMismatchError(terms[i].content, terms[j].content)) {				
 					const message = `Type mismatch: '${terms[i].content.type.name}' versus '${terms[j].content.type.name}'`;
 					for (const range of [terms[i].range, terms[j].range]) {
 						if (!diagnostics.some(diag => diag.range === range)) {
@@ -114,6 +113,19 @@ function typeMismatchDiags(schema: Schema, text: string): Diagnostic[] {
 	}
 
 	return diagnostics;
+}
+
+
+function typeMismatchError(term: Term, otherTerm: Term) {
+	return !TypeTree.areCompatibleTypes(term.type, otherTerm.type)
+		&&  nameClash(term, otherTerm);
+}
+
+function nameClash(term: Term, otherTerm: Term) {
+	if (term.termKind === TermKind.Variable && otherTerm.termKind === TermKind.Variable)
+		return term.varName === otherTerm.varName;
+	
+	return term.name === otherTerm.name;
 }
 
 

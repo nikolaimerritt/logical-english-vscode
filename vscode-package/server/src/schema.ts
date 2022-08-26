@@ -68,8 +68,9 @@ export class Schema {
 		if (candidates.length === 0)
 			return undefined;
 
-		const maxVariableCount = Math.max(...candidates.map(t => t.types.length));
-		const candidatesWithMaxVars = candidates.filter(t => t.types.length === maxVariableCount);
-		return maximal(candidatesWithMaxVars, t => t.surroundings.join(' ').length);
+		// const maxVariableCount = Math.max(...candidates.map(t => t.types.length));
+		// const candidatesWithMaxVars = candidates.filter(t => t.types.length === maxVariableCount);
+		// return maximal(candidatesWithMaxVars, t => t.matchScore(formula));
+		return maximal(candidates, t => t.matchScore(formula));
 	}
 }

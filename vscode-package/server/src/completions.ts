@@ -32,8 +32,6 @@ function literalCompletion(text: string, position: Position): CompletionItem[] {
 			|| position.line > allClausesRange.end.line) 
 		return [];
 	
-	const typeTree = typeTreeInDocument(text);
-
 	const line = text.split('\n')[position.line];
 	const literal = literalAtPosition(line, position.character);
 	if (literal === undefined)
@@ -63,9 +61,6 @@ function literalCompletion(text: string, position: Position): CompletionItem[] {
 		([_, score]) => score
 	)
 	.slice(Math.max(templates.length - maxCompletions, 0));
-
-	console.log('Scores:');
-	console.log(bestTemplatesWithScores);
 
 
 	return bestTemplatesWithScores

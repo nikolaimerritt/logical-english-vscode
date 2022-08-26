@@ -56,7 +56,9 @@ export class TypeTree {
 
 
 	public static areCompatibleTypes(type: Type, otherType: Type): boolean {
-		return isSubtype(type, otherType) || isSubtype(otherType, type);
+		return type.name === otherType.name 
+			|| isSubtype(type, otherType) 
+			|| isSubtype(otherType, type);
 	}
 
 

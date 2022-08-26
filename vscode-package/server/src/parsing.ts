@@ -104,7 +104,7 @@ export function templatesInDocument(text: string): Template[] {
 	.concat(defaultTemplateStrings);
 
 	for (let templateString of templateStrings) {
-		templateString = templateString.trim();
+		templateString = templateString.trim().replace(/\.|,/, '');
 		if (templateString.length > 0) 
 			templates.push(Template.fromString(typeTree, templateString));
 	}

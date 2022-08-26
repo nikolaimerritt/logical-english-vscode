@@ -89,7 +89,10 @@ function dataInFormulaTokens(formula: AtomicFormula, line: number, startChar: nu
         elIdx = formula.name.indexOf(el.name, elIdx);
 
         if (el.elementKind === ElementKind.Term) {
-            if (el.termKind === TermKind.Data || el.termKind === TermKind.TemplatelessFormula) {
+            if (el.termKind === TermKind.Data 
+                    || el.termKind === TermKind.Variable 
+                    || el.termKind === TermKind.TemplatelessFormula
+            ) {
                 tokens.push({
                     line,
                     char: startChar + elIdx,

@@ -1,10 +1,11 @@
 import { Type, ElementKind, Surrounding } from './element';
 
-export type Term = Data | AtomicFormula | TemplatelessFormula;
+export type Term = Data | Variable | AtomicFormula | TemplatelessFormula;
 export type FormulaElement = Surrounding | Term;
 
 export enum TermKind {
 	Data,
+	Variable,
 	AtomicFormula,
 	TemplatelessFormula
 }
@@ -19,6 +20,32 @@ export class Data {
 	constructor(name: string, type: Type) {
 		this.name = name;
 		this.type = type;
+	}
+}
+
+export class Variable {
+	public readonly elementKind = ElementKind.Term;
+	public readonly termKind = TermKind.Variable;
+	public readonly type: Type;
+	public readonly name: string;
+
+	public static readonly variablePattern = /(?<=an?|the)\s+\w[\w|\s]*/;
+
+	public get varName(): string {
+		const match = this.name.match(Variable.variablePattern);
+		if (match === null)
+			return this.name;
+		
+		return match[0].trim();
+	}
+
+	constructor(name: string, type: Type) {
+		this.name = name;
+		this.type = type;
+	}
+
+	public sameVariable(other: Variable) {
+		return this.varName === other.varName;
 	}
 }
 
