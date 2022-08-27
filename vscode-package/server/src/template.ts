@@ -259,7 +259,7 @@ export class Template {
 
 	public parseFormula(typeTree: TypeTree, formula: string): AtomicFormula {
 		const elements = this.parseElements(formula);
-		return new AtomicFormula(typeTree.getPredicateTopType(), elements);
+		return new AtomicFormula(formula, typeTree.getPredicateTopType(), elements);
 	}
 
 	private parseElements(formula: string): FormulaElement[] {
@@ -307,8 +307,14 @@ export class Template {
 
 		if (formula.length > 0 && lastTypeIdx >= 0 && lastTypeIdx < this.elements.length) {
 			const type = this.elements[lastTypeIdx];
-			if (type.elementKind === ElementKind.Type) 
-					elements.push(new Data(sanitiseLiteral(formula), type));
+			if (type.elementKind === ElementKind.Type) {
+				const termName = sanitiseLiteral(formula);
+						
+				if (Variable.variablePattern.test(termName)) 
+					elements.push(new Variable(termName, type));
+				else
+					elements.push(new Data(termName, type));
+			}
 		}
 		return elements;
 	}

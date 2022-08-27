@@ -1,5 +1,5 @@
 import { Template } from './template';
-import { Data, AtomicFormula, FormulaElement, TemplatelessFormula } from './formula';
+import { Data, AtomicFormula, FormulaElement, TemplatelessFormula, TermKind, Variable, Term } from './formula';
 import { ElementKind, Surrounding } from './element';
 import { maximal } from './utils';
 import { dummyType, TypeTree } from './type-tree';
@@ -45,12 +45,13 @@ export class Schema {
 			if (lastSurrounding?.elementKind === ElementKind.Surrounding
 					&& lastTerm?.elementKind === ElementKind.Term
 					&& lastSurrounding.name.endsWith(' that')
+					&& this.shouldBeFormula(lastTerm)
 			) {
 				elements[elements.length - 1] = this.parseFormula(lastTerm.name, lastTerm.type);
 			}
 		}
 	
-		return new AtomicFormula(formulaType, elements);
+		return new AtomicFormula(formula, formulaType, elements);
 	}
 
 	// finds the template that 
@@ -72,5 +73,15 @@ export class Schema {
 		// const candidatesWithMaxVars = candidates.filter(t => t.types.length === maxVariableCount);
 		// return maximal(candidatesWithMaxVars, t => t.matchScore(formula));
 		return maximal(candidates, t => t.matchScore(formula));
+	}
+
+	private shouldBeFormula(term: Term) {
+		if (term.termKind === TermKind.Data)
+			return true;
+
+		if (term.termKind === TermKind.Variable)
+			return this.templates.some(t => t.matchesFormula(term.name));
+
+		return false;
 	}
 }

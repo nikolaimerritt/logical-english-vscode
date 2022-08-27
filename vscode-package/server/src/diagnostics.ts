@@ -38,7 +38,7 @@ export function diagnostics(document: string): Diagnostic[] {
 	document = ignoreComments(document);
 
 	const diags = [];
-	diags.push(... literalHasNoTemplateDiags(schema, document));
+	diags.push(... templatelessAtomicFormulaDiags(schema, document));
 	diags.push(...misalignedConnectivesDiags(document));
 
 	if (typeChecking) 
@@ -59,7 +59,7 @@ export function debugOnStart() {
 
 
 // refactor to export function text -> literals with no template
-function literalHasNoTemplateDiags(schema: Schema, text: string): Diagnostic[] {
+function templatelessAtomicFormulaDiags(schema: Schema, text: string): Diagnostic[] {
 	const diagnostics: Diagnostic[] = [];	
 	for (const { content: formula, range } of formulasInDocument(schema, text))
 		if (isTemplateless(formula) && diagnostics.every(d => !isSameRange(d.range, range)))

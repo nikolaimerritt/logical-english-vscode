@@ -91,3 +91,64 @@ export function isSamePosition(first: Position, second: Position) {
 export function isSameRange(first: Range, second: Range) {
 	return isSamePosition(first.start, second.start) && isSamePosition(first.end, second.end);
 }
+
+export function findInText(text: string, substring: string, start: Position): Range | undefined {
+	const i = positionToIndex(text, start);
+	const startIdx = text.indexOf(
+		substring, 
+		i
+	);
+	if (startIdx === -1)
+		return undefined;
+
+	const endIdx = startIdx + substring.length;
+
+	return {
+		start: indexToPosition(text, startIdx),
+		end: indexToPosition(text, endIdx)
+	};
+}
+
+
+export function offsetRangeByPosition(range: Range, pos: Position): Range {
+	return {
+		start: {
+			line: range.start.line + pos.line,
+			character: range.start.character + pos.character
+		},
+		end: {
+			line: range.end.line + pos.line,
+			character: range.end.character + pos.character
+		},
+	};
+}
+
+export function offsetRangeByLine(range: Range, line: number): Range {
+	return offsetRangeByPosition(range, { line, character: 0 });
+}
+
+
+export function positionToIndex(text: string, pos: Position): number {
+	if (pos.line === 0)
+        return pos.character;
+
+	const linesBefore = text
+    .split('\n')
+    .slice(0, pos.line);
+    
+    // console.log('Lines before:');
+    // console.log(linesBefore);
+
+    const linesBeforeLength = linesBefore.join('\n').length;
+	return linesBeforeLength + '\n'.length + pos.character;
+}
+
+
+
+export function indexToPosition(text: string, idx: number): Position {
+	const textBefore = text.slice(0, idx);
+	return {
+		line: countOccurances(textBefore, '\n'),
+		character: textBefore.split('\n').at(-1)!.length
+	};
+}

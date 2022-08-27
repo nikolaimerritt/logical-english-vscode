@@ -1,8 +1,7 @@
 the templates are:
 *a person* goes on holiday to *a location*.
-*a person* knows the *an X* are *a Y*.
+*a person* lives in *a mansion*.
 
-the knowledge base Sister includes:
+the knowledge base Foo includes:
 fred bloggs goes on holiday to los angeles if
-	fred bloggs knows the plane tickets are affordable
-	and fred bloggs knows the buses there are cheap.
+	fred bloggs lives in the white house.

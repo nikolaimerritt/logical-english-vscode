@@ -9,10 +9,10 @@ import {
 	SemanticTokenTypes
 } from "vscode-languageserver";
 
-import { TextDocument } from "vscode-languageserver-textdocument";
+import { Position, Range, TextDocument } from "vscode-languageserver-textdocument";
 import { Template } from './template';
-import { formulasInDocument as formulasInDocument, templatesInDocument } from './parsing';
-import { ignoreComments } from './utils';
+import { ContentRange, formulasInDocument as formulasInDocument, templatesInDocument } from './parsing';
+import { findInText, ignoreComments, offsetRangeByLine, offsetRangeByPosition } from './utils';
 import { ElementKind } from './element';
 import { AtomicFormula, TermKind } from './formula';
 import { isTemplateless, Schema } from './schema';
@@ -51,7 +51,7 @@ function tokensFromAllTerms(schema: Schema, document: string): TokenDetails[] {
     const tokens: TokenDetails[] = [];
     
     // eslint-disable-next-line prefer-const
-    for (let { content: formula, range } of formulasInDocument(schema, document)) {
+    for (const formula of formulasInDocument(schema, document)) {
         // let elIdx = 0;
         // for (const el of parseFormula(templates, formula).elements) {
         //     elIdx = formula.indexOf(el.name, elIdx);
@@ -67,13 +67,8 @@ function tokensFromAllTerms(schema: Schema, document: string): TokenDetails[] {
         //     }
         //     elIdx += el.name.length;
         // }
-        if (!isTemplateless(formula)) {
-            const atomTokens = dataInFormulaTokens(
-                formula,
-                range.start.line, 
-                range.start.character
-            );
-
+        if (formula.content.termKind === TermKind.AtomicFormula) {
+            const atomTokens = dataInFormulaTokens(formula.mapContent(f => f as AtomicFormula));
             tokens.push(...atomTokens);
         }
     }
@@ -81,32 +76,46 @@ function tokensFromAllTerms(schema: Schema, document: string): TokenDetails[] {
     return tokens;
 }
 
-function dataInFormulaTokens(formula: AtomicFormula, line: number, startChar: number): TokenDetails[] {
+function dataInFormulaTokens(formula: ContentRange<AtomicFormula>): TokenDetails[] {
     const tokens: TokenDetails[] = [];
-    let elIdx = 0;
+    let seekPos: Position = { 
+        line: 0, 
+        character: 0
+    };
 
-    for (const el of formula.elements) {
-        elIdx = formula.name.indexOf(el.name, elIdx);
-
+    for (const el of formula.content.elements) {
         if (el.elementKind === ElementKind.Term) {
-            if (el.termKind === TermKind.Data 
+            const elRangeInClause = findInText(formula.content.name, el.name, seekPos);
+            if (elRangeInClause !== undefined) {
+                const elRange = offsetRangeByPosition(
+                    elRangeInClause,
+                    formula.range.start
+                );
+
+                if (el.termKind === TermKind.Data 
                     || el.termKind === TermKind.Variable 
                     || el.termKind === TermKind.TemplatelessFormula
-            ) {
-                tokens.push({
-                    line,
-                    char: startChar + elIdx,
-                    length: el.name.length,
-                    tokenTypeName: 'variable',
-                    tokenModifierName: null
-                });
+                ) {
+                    tokens.push({
+                        line: elRange.start.line,
+                        char: elRange.start.character,
+                        length: el.name.length,
+                        tokenTypeName: 'variable',
+                        tokenModifierName: null
+                    });
+
+                }
+                else if (el.termKind === TermKind.AtomicFormula) { 
+                    const subformulaAtoms = dataInFormulaTokens(
+                        new ContentRange(el, elRange
+                    ));
+                    tokens.push(...subformulaAtoms);
+                }
+
+                seekPos = elRangeInClause.end;
             }
-            else if (el.termKind === TermKind.AtomicFormula) { 
-                const subformulaAtoms = dataInFormulaTokens(el, line, startChar + elIdx);
-                tokens.push(...subformulaAtoms);
-            }
+            
         }
-        elIdx += el.name.length;
     }
 
     return tokens;

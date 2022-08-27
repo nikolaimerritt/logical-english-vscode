@@ -1,10 +1,11 @@
 import { Position, Range } from 'vscode-languageserver';
 import { Template } from './template';
-import { AtomicFormula, TemplatelessFormula, Term } from './formula';
+import { AtomicFormula, TemplatelessFormula, Term, TermKind } from './formula';
 import { TypeTree } from './type-tree';
 import { defaultTemplateStrings } from './default-templates';
-import { sanitiseLiteral } from './utils';
+import { countOccurances, findInText, offsetRangeByLine, sanitiseLiteral } from './utils';
 import { isTemplateless, Schema } from './schema';
+import { ElementKind } from './element';
 
 
 export class ContentRange<T> {
@@ -141,7 +142,7 @@ export function clausesInDocument(text: string): ContentRange<string>[] {
 				{
 					start: {
 						line: clauseStart,
-						character: 0
+						character: lines[l].indexOf(lines[l].trim()[0])
 					},
 					end: {
 						line: clauseEnd,
@@ -182,47 +183,103 @@ export function connectivesRegex(): RegExp {
 
 
 function formulasInClause(schema: Schema, clause: ContentRange<string>): ContentRange<AtomicFormula | TemplatelessFormula>[] {
-	const lines = clause.content.split('\n');
 	const formulasWithRanges: ContentRange<AtomicFormula | TemplatelessFormula>[] = [];
+	// const lines = clause.content.split('\n');
 
-	for (let lineOffset = 0; lineOffset < lines.length; lineOffset++) {
-		const lineNumber = clause.range.start.line + lineOffset;
-		const formulasInLine = formulaStringsInLine(lines[lineOffset]);
+	// for (let lineOffset = 0; lineOffset < lines.length; lineOffset++) {
+	// 	const lineNumber = clause.range.start.line + lineOffset;
+	// 	const formulasInLine = formulaStringsInLine(lines[lineOffset]);
 
-		formulasInLine.forEach(formula => {
-			const range: Range = {
-				start: {
-					line: lineNumber,
-					character: lines[lineOffset].indexOf(formula)
-				},
-				end: {
-					line: lineNumber,
-					character: lines[lineOffset].indexOf(formula) + formula.length
-				}
-			};
-			formulasWithRanges.push(new ContentRange(
-				schema.parseFormula(formula),
-				range
-			));
-		});
+	// 	formulasInLine.forEach(formula => {
+	// 		const range: Range = {
+	// 			start: {
+	// 				line: lineNumber,
+	// 				character: lines[lineOffset].indexOf(formula)
+	// 			},
+	// 			end: {
+	// 				line: lineNumber,
+	// 				character: lines[lineOffset].indexOf(formula) + formula.length
+	// 			}
+	// 		};
+	// 		formulasWithRanges.push(new ContentRange(
+	// 			schema.parseFormula(formula),
+	// 			range
+	// 		));
+	// 	});
+	// }
+
+	// return formulasWithRanges;
+	let seekPos: Position = { line: 0, character: 0 };
+	const conns = connectivesRegex();
+	for (let highestOrder of clause.content.split(connectivesRegex())) {
+		highestOrder = highestOrder.trim();
+		const formula = schema.parseFormula(highestOrder);
+		const rangeInClause = findInText(clause.content, highestOrder, seekPos);
+
+		if (rangeInClause !== undefined) {
+			const range = offsetRangeByLine(
+				rangeInClause,
+				clause.range.start.line
+			);
+			formulasWithRanges.push(new ContentRange(formula, range));
+			if (formula.termKind === TermKind.AtomicFormula) {
+				formulasWithRanges.push(
+					...findSubFormulas(
+						new ContentRange(highestOrder, range),
+						formula
+					)
+				);
+			}
+
+			seekPos = rangeInClause.end;
+		}
 	}
 
 	return formulasWithRanges;
 }
 
-export const subformulaPattern = /(?<= that )(\s*).*/g;
-
-function formulaStringsInLine(line: string): string[] {
-	const formulaStrings: string[] = line.split(connectivesRegex())
-	.map(sanitiseLiteral)
-	.filter(lit => lit.length > 0);
-
-	for (const match of line.matchAll(subformulaPattern)) {
-		formulaStrings.push(match[0]);
+function findSubFormulas(text: ContentRange<string>, formula: AtomicFormula): ContentRange<AtomicFormula>[] {
+	const subFormulaRanges: ContentRange<AtomicFormula>[] = [];
+	let prevPos = {
+		line: 0,
+		character: 0
+	};
+	
+	for (const subformula of formula.subFormulas) {
+		const rangeInText = findInText(text.content, subformula.name, prevPos);
+		if (rangeInText !== undefined) {
+			const range = offsetRangeByLine(rangeInText, text.range.start.line);
+			const subFormulaRange = new ContentRange(subformula, range);
+			subFormulaRanges.push(subFormulaRange);
+			subFormulaRanges.push(
+				...findSubFormulas(
+					subFormulaRange.mapContent(f => f.name), 
+					subformula
+				)
+			);
+			prevPos = rangeInText.end;
+		}
 	}
 
-	return formulaStrings;
+	return subFormulaRanges;
 }
+
+
+
+
+export const subformulaPattern = /(?<= that )(\s*).*/g;
+
+// function formulaStringsInLine(line: string): string[] {
+// 	const formulaStrings: string[] = line.split(connectivesRegex())
+// 	.map(sanitiseLiteral)
+// 	.filter(lit => lit.length > 0);
+
+// 	for (const match of line.matchAll(subformulaPattern)) {
+// 		formulaStrings.push(match[0]);
+// 	}
+
+// 	return formulaStrings;
+// }
 
 
 

@@ -67,10 +67,11 @@ export class AtomicFormula {
 	public readonly termKind = TermKind.AtomicFormula;
 	public readonly type: Type;
 	public readonly elements: FormulaElement[];
+	public readonly name: string;
 
-	public get name(): string {
-		return this.elements.map(el => el.name).join(' ');
-	}
+	// public get name(): string {
+	// 	return this.elements.map(el => el.name).join(' ');
+	// }
 
 	public get terms(): Term[] {
 		return this.elements
@@ -84,7 +85,14 @@ export class AtomicFormula {
 		.map(s => s as Surrounding);
 	}
 
-	constructor(type: Type, elements: FormulaElement[]) {
+	public get subFormulas(): AtomicFormula[] {
+		return this.terms
+		.filter(term => term.termKind === TermKind.AtomicFormula)
+		.map(term => term as AtomicFormula);
+	}
+
+	constructor(name: string, type: Type, elements: FormulaElement[]) {
+		this.name = name;
 		this.type = type;
 		this.elements = elements;
 	}
