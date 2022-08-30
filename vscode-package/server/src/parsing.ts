@@ -299,24 +299,25 @@ export function termsInClause(schema: Schema, clause: ContentRange<string>): Con
 	for (const { content: formula, range: formulaRange } of formulasInClause(schema, clause)) {
 		// const template = templates.find(t => t.matchesLiteral(literal));
 		if (!isTemplateless(formula)) {
-			let termIdx = 0;
-
-			for (const term of formula.terms) {
-				termIdx = formula.name.indexOf(term.name, termIdx);
-				termRanges.push(new ContentRange(
-					term,
-					{
-						start: { 
-							line: formulaRange.start.line, 
-							character: formulaRange.start.character + termIdx 
-						},
-						end: { 
-							line: formulaRange.start.line, 
-							character: formulaRange.start.character + termIdx + term.name.length 
+			let elIdx = 0;
+			for (const el of formula.elements) {
+				elIdx = formula.name.indexOf(el.name, elIdx);
+				if (el.elementKind === ElementKind.Term) {
+					termRanges.push(new ContentRange(
+						el,
+						{
+							start: { 
+								line: formulaRange.start.line, 
+								character: formulaRange.start.character + elIdx 
+							},
+							end: { 
+								line: formulaRange.start.line, 
+								character: formulaRange.start.character + elIdx + el.name.length 
+							}
 						}
-					}
-				));
-				termIdx += term.name.length;
+					));
+				}
+				elIdx += el.name.length;
 			}
 		}
 	}

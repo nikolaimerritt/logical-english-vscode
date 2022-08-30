@@ -2,7 +2,7 @@ import { CodeAction, CodeActionParams, DiagnosticSeverity, CodeActionKind, Posit
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { Template } from './template';
 import { atomicFormulaHasNoTemplateMessage } from './diagnostics';
-import { ignoreComments } from './utils';
+import { ignoreComments, sanitiseLiteral } from './utils';
 import { 
 	formulasInDocument, 
 	sectionWithHeader, 
@@ -69,7 +69,7 @@ function literalWithNoTemplateFixes(params: CodeActionParams, schema: Schema, do
 					changes: {
 						[params.textDocument.uri]: [{
 							range: endOfTemplates,
-							newText: `${generatedTemplate!.toString()}.\n` 
+							newText: `${sanitiseLiteral(generatedTemplate!.toString())}.\n` 
 							// why is TypeScript saying that generatedTemplate could be undefined??
 						}]
 					}

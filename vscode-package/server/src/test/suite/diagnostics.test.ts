@@ -16,34 +16,36 @@ suite('Diagnostics: Atomic formula has no template', () => {
 	test('Incomplete template surrounding', async () => {
 		await testDiagnostics(
 			docUri,
-			[ diagAt(5, 4, 5, 18) ]
+			[ diagAt(5, 4, 'fred bloggs go') ]
 		);
 	});
 
 	test('Complete template surrounding, missing variable', async () => {
 		await testDiagnostics(
 			docUri,
-			[ diagAt(6, 4, 6, 34) ]
+			[ diagAt(6, 4, 'fred bloggs goes on holiday to') ]
 		);
 	});
 
 	test('In higher-order formula: incomplete template surrounding', async () => {
 		await testDiagnostics(
 			docUri,
-			[ diagAt(7, 48, 7, 62) ]
+			[],
+			[ diagAt(7, 48, 'fred bloggs go') ]
 		);
 	});
 
 	test('In higher-order formula: missing variable', async () => {
 		await testDiagnostics(
 			docUri,
-			[ diagAt(8, 48, 8, 79) ]
+			[],
+			[ diagAt(8, 48, 'fred bloggs goes on holiday to') ]
 		);
 	});
 });
 
 
-async function testDiagnostics(docUri: vscode.Uri, expectedDiags: Diag[]) {
+async function testDiagnostics(docUri: vscode.Uri, expectedDiags: Diag[], dontWantDiags: Diag[] = []) {
 	const editor = await activate(docUri);
 	await vscode.commands.executeCommand(
 		'vscode.provideDocumentSemanticTokensLegend',
@@ -72,6 +74,16 @@ ${diags.map(diagnosticToString).join('\n')}
 
 		assert.ok(foundDiag, message);
 	}
+
+	for (const dontWant of dontWantDiags) {
+		const foundDiag = diags
+		.find(
+			d => d.message === dontWant.message 
+			&& equalRange(d.range, dontWant.range)
+		);
+
+		assert.ok(foundDiag === undefined, message);
+	}
 }
 
 
@@ -79,9 +91,9 @@ function diagnosticToString(diagnostic: Diag) {
 	return `'${diagnostic.message}' from ${positionToString(diagnostic.range.start)} to ${positionToString(diagnostic.range.end)}`;
 }
 
-function diagAt(startLine: number, startChar: number, endLine: number, endChar: number): Diag {
+function diagAt(startLine: number, startChar: number, formula: string): Diag {
 	return {
 		message: errorMessage,
-		range: makeRange(startLine, startChar, endLine, endChar)
+		range: makeRange(startLine, startChar, startLine, startChar + formula.length + 1)
 	};
 }

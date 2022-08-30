@@ -11,7 +11,7 @@ import {
 
 import { Position, Range, TextDocument } from "vscode-languageserver-textdocument";
 import { Template } from './template';
-import { ContentRange, formulasInDocument as formulasInDocument, templatesInDocument } from './parsing';
+import { clausesInDocument, ContentRange, formulasInDocument as formulasInDocument, templatesInDocument, termsInClause } from './parsing';
 import { findInText, ignoreComments, offsetRangeByLine, offsetRangeByPosition } from './utils';
 import { ElementKind } from './element';
 import { AtomicFormula, TermKind } from './formula';
@@ -52,28 +52,39 @@ function tokensFromAllTerms(schema: Schema, document: string): TokenDetails[] {
     
     // eslint-disable-next-line prefer-const
     for (const formula of formulasInDocument(schema, document)) {
-        // let elIdx = 0;
-        // for (const el of parseFormula(templates, formula).elements) {
-        //     elIdx = formula.indexOf(el.name, elIdx);
+         if (formula.content.termKind === TermKind.AtomicFormula) {
+            // let elIdx = 0;
+            // for (const el of formula.content.elements) {
+            //     elIdx = formula.content.name.indexOf(el.name, elIdx);
 
-        //     if (el.elementKind === ElementKind.Term) {
-        //         tokens.push({
-        //             line: range.start.line,
-        //             char: range.start.character + elIdx,
-        //             length: el.name.length,
-        //             tokenTypeName: 'variable',
-        //             tokenModifierName: null
-        //         });
-        //     }
-        //     elIdx += el.name.length;
-        // }
-        if (formula.content.termKind === TermKind.AtomicFormula) {
+            //     if (el.elementKind === ElementKind.Term && el.termKind !== TermKind.AtomicFormula) {
+            //         tokens.push({
+            //             line: formula.range.start.line,
+            //             char: formula.range.start.character + elIdx,
+            //             length: el.name.length,
+            //             tokenTypeName: 'variable',
+            //             tokenModifierName: null
+            //         });
+            //     }
+            //     elIdx += el.name.length;
+            // }
             const atomTokens = dataInFormulaTokens(formula.mapContent(f => f as AtomicFormula));
             tokens.push(...atomTokens);
         }
     }
 
     return tokens;
+    // for (const { content: term, range } of clausesInDocument(document).flatMap(c => termsInClause(schema, c))) {
+    //     tokens.push({
+    //         line: range.start.line,
+    //         char: range.start.character,
+    //         length: term.name.length,
+    //         tokenTypeName: 'variable',
+    //         tokenModifierName: null
+    //     });
+    // }
+
+    // return tokens;
 }
 
 function dataInFormulaTokens(formula: ContentRange<AtomicFormula>): TokenDetails[] {
@@ -84,13 +95,14 @@ function dataInFormulaTokens(formula: ContentRange<AtomicFormula>): TokenDetails
     };
 
     for (const el of formula.content.elements) {
-        if (el.elementKind === ElementKind.Term) {
-            const elRangeInClause = findInText(formula.content.name, el.name, seekPos);
-            if (elRangeInClause !== undefined) {
-                const elRange = offsetRangeByPosition(
-                    elRangeInClause,
-                    formula.range.start
-                );
+        const elRangeInClause = findInText(formula.content.name, el.name, seekPos);
+        if (elRangeInClause !== undefined) {
+            const elRange = offsetRangeByPosition(
+                elRangeInClause,
+                formula.range.start
+            );
+
+            if (el.elementKind === ElementKind.Term) {
 
                 if (el.termKind === TermKind.Constant 
                     || el.termKind === TermKind.Variable 
@@ -111,10 +123,8 @@ function dataInFormulaTokens(formula: ContentRange<AtomicFormula>): TokenDetails
                     ));
                     tokens.push(...subformulaAtoms);
                 }
-
-                seekPos = elRangeInClause.end;
             }
-            
+            seekPos = elRangeInClause.end;
         }
     }
 

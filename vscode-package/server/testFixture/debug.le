@@ -1,10 +1,6 @@
 the templates are:
-*a meeting* is prohibited,
-*a person* is unvaccinated,
-*a person* attends *a meeting*,
+*a person* knows that *a fact*.
+*a merchant* ships *an item*.
 
 the knowledge base Foo includes:
-A meeting is prohibited 
-    if the person is unvaccinated
-	and it is not the case that
-	the person is unvaccinated.
+fred knows that bob ships ships.
