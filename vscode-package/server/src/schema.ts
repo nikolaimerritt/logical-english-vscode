@@ -1,5 +1,5 @@
 import { Template } from './template';
-import { Data, AtomicFormula, FormulaElement, TemplatelessFormula, TermKind, Variable, Term } from './formula';
+import { Constant, AtomicFormula, FormulaElement, TemplatelessFormula, TermKind, Variable, Term } from './formula';
 import { ElementKind, Surrounding } from './element';
 import { maximal } from './utils';
 import { dummyType, TypeTree } from './type-tree';
@@ -76,7 +76,7 @@ export class Schema {
 	}
 
 	private shouldBeFormula(term: Term) {
-		if (term.termKind === TermKind.Data)
+		if (term.termKind === TermKind.Constant)
 			return true;
 
 		if (term.termKind === TermKind.Variable)

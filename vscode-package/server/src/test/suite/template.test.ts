@@ -2,7 +2,7 @@
 
 import * as assert from 'assert';
 import { Type } from '../../element';
-import { Data, Term } from '../../formula';
+import { Constant, Term } from '../../formula';
 
 // You can import and use all API from the 'vscode' module
 // as well as import your extension to test it
@@ -336,25 +336,25 @@ suite('Template.withVariable()', () => {
 		const testCases: TestCase[] = [
 			{
 				templateString: '*a person* goes to london to visit *a museum*',
-				term: new Data('london', new Type('a place', [])),
+				term: new Constant('london', new Type('a place', [])),
 				surroundingsCount: 2,
 				typeCount: 3
 			},
 			{
 				templateString: '*a person* goes to london to visit *a museum* today',
-				term: new Data('london', new Type('a place', [])),
+				term: new Constant('london', new Type('a place', [])),
 				surroundingsCount: 3,
 				typeCount: 3
 			},
 			{
 				templateString: '*a person* ships ships',
-				term: new Data('ships', new Type('a product', [])),
+				term: new Constant('ships', new Type('a product', [])),
 				surroundingsCount: 1,
 				typeCount: 2
 			},
 			{
 				templateString: '*a person* goes to london to see london even though theyve been to london on *a day*',
-				term: new Data('london', new Type('a place', [])),
+				term: new Constant('london', new Type('a place', [])),
 				surroundingsCount: 4,
 				typeCount: 5
 			}

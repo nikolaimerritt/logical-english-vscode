@@ -213,26 +213,29 @@ function formulasInClause(schema: Schema, clause: ContentRange<string>): Content
 	const conns = connectivesRegex();
 	for (let highestOrder of clause.content.split(connectivesRegex())) {
 		highestOrder = highestOrder.trim();
-		const formula = schema.parseFormula(highestOrder);
-		const rangeInClause = findInText(clause.content, highestOrder, seekPos);
+		if (highestOrder.length > 0) {
+			const formula = schema.parseFormula(highestOrder);
+			const rangeInClause = findInText(clause.content, highestOrder, seekPos);
 
-		if (rangeInClause !== undefined) {
-			const range = offsetRangeByLine(
-				rangeInClause,
-				clause.range.start.line
-			);
-			formulasWithRanges.push(new ContentRange(formula, range));
-			if (formula.termKind === TermKind.AtomicFormula) {
-				formulasWithRanges.push(
-					...findSubFormulas(
-						new ContentRange(highestOrder, range),
-						formula
-					)
+			if (rangeInClause !== undefined) {
+				const range = offsetRangeByLine(
+					rangeInClause,
+					clause.range.start.line
 				);
-			}
+				formulasWithRanges.push(new ContentRange(formula, range));
+				if (formula.termKind === TermKind.AtomicFormula) {
+					formulasWithRanges.push(
+						...findSubFormulas(
+							new ContentRange(highestOrder, range),
+							formula
+						)
+					);
+				}
 
-			seekPos = rangeInClause.end;
+				seekPos = rangeInClause.end;
+			}
 		}
+		
 	}
 
 	return formulasWithRanges;

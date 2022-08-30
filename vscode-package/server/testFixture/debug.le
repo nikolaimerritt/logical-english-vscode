@@ -1,7 +1,10 @@
 the templates are:
-*a person* goes on holiday to *a location*.
-*a person* lives in *a mansion*.
+*a meeting* is prohibited,
+*a person* is unvaccinated,
+*a person* attends *a meeting*,
 
 the knowledge base Foo includes:
-fred bloggs goes on holiday to los angeles if
-	fred bloggs lives in the white house.
+A meeting is prohibited 
+    if the person is unvaccinated
+	and it is not the case that
+	the person is unvaccinated.

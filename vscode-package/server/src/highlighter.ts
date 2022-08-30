@@ -92,7 +92,7 @@ function dataInFormulaTokens(formula: ContentRange<AtomicFormula>): TokenDetails
                     formula.range.start
                 );
 
-                if (el.termKind === TermKind.Data 
+                if (el.termKind === TermKind.Constant 
                     || el.termKind === TermKind.Variable 
                     || el.termKind === TermKind.TemplatelessFormula
                 ) {

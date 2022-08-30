@@ -8,7 +8,7 @@
 	},
 	"icon": "le-logo.jpeg",
 	"license": "MIT",
-	"version": "1.1.6",
+	"version": "1.1.8",
 	"homepage": "https://github.com/nikolaimerritt/logical-english-vscode",
 	"repository": {
 		"type": "git",

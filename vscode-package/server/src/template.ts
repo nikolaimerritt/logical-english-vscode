@@ -1,7 +1,7 @@
 import { deepCopy, removeBlanks, removeFirst, regexSanitise, maximal, sortBy, sanitiseLiteral } from './utils';
 import { dummyType, TypeTree } from './type-tree';
 import { Type, TemplateElement, Surrounding, ElementKind } from './element';
-import { Data, AtomicFormula, FormulaElement, Term, TermKind, Variable } from './formula';
+import { Constant, AtomicFormula, FormulaElement, Term, TermKind, Variable } from './formula';
 
 
 
@@ -296,7 +296,7 @@ export class Template {
 						if (Variable.variablePattern.test(termName)) 
 							elements.push(new Variable(termName, type));
 						else
-							elements.push(new Data(termName, type));
+							elements.push(new Constant(termName, type));
 					}
 				}
 
@@ -313,7 +313,7 @@ export class Template {
 				if (Variable.variablePattern.test(termName)) 
 					elements.push(new Variable(termName, type));
 				else
-					elements.push(new Data(termName, type));
+					elements.push(new Constant(termName, type));
 			}
 		}
 		return elements;

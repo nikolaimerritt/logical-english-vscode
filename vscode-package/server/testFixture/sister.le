@@ -1,0 +1,10 @@
+the templates are:
+*a person* is sister of *a person*.
+*a person* is female.
+the parents of *a person* are *a mother* and *a father*.
+
+the knowledge base sister includes:
+a person X is sister of a person Y if  X is female
+	and the parents of X are a mother and a father
+	and the parents of Y are the mother and the father
+	and X is different from Y.
