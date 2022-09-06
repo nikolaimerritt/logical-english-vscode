@@ -356,7 +356,8 @@ export class Template {
 	}
 
 	private static findSurrounding(surroundingName: string, formula: string): string | undefined {
-		if (formula.includes(surroundingName))
+		const surroundingPattern = new RegExp(`\\b${regexSanitise(surroundingName)}\\b`);
+		if (surroundingPattern.test(formula))
 			return surroundingName;
 		
 		else {
