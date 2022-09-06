@@ -152,3 +152,20 @@ export function indexToPosition(text: string, idx: number): Position {
 		character: textBefore.split('\n').at(-1)!.length
 	};
 }
+
+
+export function beforeSubstring(parent: string, substring: string) {
+	const substringStart = parent.indexOf(substring);
+	if (substringStart === -1)
+		return '';
+
+	return parent.slice(0, substringStart);
+}
+
+export function afterSubstring(parent: string, substring: string) {
+	const substringStart = parent.indexOf(substring);
+	if (substringStart === -1)
+		return parent;
+
+	return parent.slice(substringStart + substring.length, undefined);
+}

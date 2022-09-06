@@ -1,4 +1,4 @@
-import { deepCopy, removeBlanks, removeFirst, regexSanitise, maximal, sortBy, sanitiseLiteral } from './utils';
+import { deepCopy, removeBlanks, removeFirst, regexSanitise, maximal, sortBy, sanitiseLiteral, beforeSubstring, afterSubstring } from './utils';
 import { dummyType, TypeTree } from './type-tree';
 import { Type, TemplateElement, Surrounding, ElementKind } from './element';
 import { Constant, AtomicFormula, FormulaElement, Term, TermKind, Variable } from './formula';
@@ -262,60 +262,118 @@ export class Template {
 		return new AtomicFormula(formula, typeTree.getPredicateTopType(), elements);
 	}
 
+	// private parseElements(formula: string): FormulaElement[] {
+	// 	formula = sanitiseLiteral(formula);
+	// 	const elements: FormulaElement[] = [];
+	// 	let lastTypeIdx = this.elements[0].elementKind === ElementKind.Type
+	// 		? 0
+	// 		: -1;
+		
+	// 	for (let i = 0; i < this.elements.length; i++) {
+	// 		const join = this.elements[i];
+	// 		if (join.elementKind === ElementKind.Surrounding) {
+	// 			let phraseIdx = formula.indexOf(join.name);
+	// 			let phrase = join.name;
+	// 			if (phraseIdx === -1) {
+	// 				const startOfPhraseIdx = [...Array(formula.length).keys()]
+	// 				.find(i => join.name.startsWith(formula.slice(i, )));
+	// 				if (startOfPhraseIdx !== undefined) {
+	// 					phraseIdx = startOfPhraseIdx;
+	// 					phrase = formula.slice(phraseIdx, );
+	// 				}
+	// 			}
+
+	// 			if (phraseIdx === -1)
+	// 				break;
+				
+	// 			lastTypeIdx = i + 1;
+
+	// 			if (i > 0 && phraseIdx > 0) {
+	// 				const type = this.elements[i - 1];
+	// 				if (type.elementKind === ElementKind.Type) {
+	// 					const termName = sanitiseLiteral(formula.slice(0, phraseIdx));
+	// 					elements.push(Template.termFromName(termName, type));
+	// 				}
+	// 			}
+
+	// 			elements.push(new Surrounding(phrase));
+	// 			formula = sanitiseLiteral(formula.slice(phraseIdx + phrase.length + 1, ));
+	// 		}
+	// 	}
+
+	// 	if (formula.length > 0 && lastTypeIdx >= 0 && lastTypeIdx < this.elements.length) {
+	// 		const type = this.elements[lastTypeIdx];
+	// 		if (type.elementKind === ElementKind.Type) {
+	// 			const termName = sanitiseLiteral(formula);
+						
+	// 			if (Variable.variablePattern.test(termName)) 
+	// 				elements.push(new Variable(termName, type));
+	// 			else
+	// 				elements.push(new Constant(termName, type));
+	// 		}
+	// 	}
+	// 	return elements;
+	// }
+
 	private parseElements(formula: string): FormulaElement[] {
 		formula = sanitiseLiteral(formula);
-		const elements: FormulaElement[] = [];
-		let lastTypeIdx = this.elements[0].elementKind === ElementKind.Type
-			? 0
-			: -1;
-		
+
+		const formulaElements: FormulaElement[] = [];
 		for (let i = 0; i < this.elements.length; i++) {
-			const join = this.elements[i];
-			if (join.elementKind === ElementKind.Surrounding) {
-				let phraseIdx = formula.indexOf(join.name);
-				let phrase = join.name;
-				if (phraseIdx === -1) {
-					const startOfPhraseIdx = [...Array(formula.length).keys()]
-					.find(i => join.name.startsWith(formula.slice(i, )));
-					if (startOfPhraseIdx !== undefined) {
-						phraseIdx = startOfPhraseIdx;
-						phrase = formula.slice(phraseIdx, );
-					}
-				}
-
-				if (phraseIdx === -1)
+			const surrounding = this.elements[i];
+			if (surrounding.elementKind === ElementKind.Surrounding) {
+				const surroundingText = Template.findSurrounding(surrounding.name, formula)?.trim();
+				if (surroundingText === undefined)
 					break;
-				
-				lastTypeIdx = i + 1;
 
-				if (i > 0 && phraseIdx > 0) {
+				if (i > 0) {
 					const type = this.elements[i - 1];
 					if (type.elementKind === ElementKind.Type) {
-						const termName = sanitiseLiteral(formula.slice(0, phraseIdx));
-						
-						if (Variable.variablePattern.test(termName)) 
-							elements.push(new Variable(termName, type));
-						else
-							elements.push(new Constant(termName, type));
+						const termName = beforeSubstring(formula, surroundingText).trim();
+						if (termName.length > 0) {
+							formulaElements.push(Template.termFromName(termName, type));
+							formula = afterSubstring(formula, termName).trim();
+						} 
+						else 
+							break;
 					}
 				}
 
-				elements.push(new Surrounding(phrase));
-				formula = sanitiseLiteral(formula.slice(phraseIdx + phrase.length + 1, ));
+				formulaElements.push(new Surrounding(surroundingText));
+				formula = afterSubstring(formula, surroundingText).trim();
 			}
 		}
 
-		if (formula.length > 0 && lastTypeIdx >= 0 && lastTypeIdx < this.elements.length) {
-			const type = this.elements[lastTypeIdx];
-			if (type.elementKind === ElementKind.Type) {
-				const termName = sanitiseLiteral(formula);
-						
-				if (Variable.variablePattern.test(termName)) 
-					elements.push(new Variable(termName, type));
-				else
-					elements.push(new Constant(termName, type));
+		if (formula.length > 0 
+				&& formulaElements.length === this.elements.length - 1	
+		) {
+			const lastType = this.elements.at(-1);
+			if (lastType !== undefined && lastType.elementKind === ElementKind.Type) 
+				formulaElements.push(Template.termFromName(formula, lastType));
+		}
+
+		return formulaElements;
+	}
+
+	private static findSurrounding(surroundingName: string, formula: string): string | undefined {
+		if (formula.includes(surroundingName))
+			return surroundingName;
+		
+		else {
+			for (let i = 0; i < formula.length; i++) {
+				const endOfFormula = formula.slice(i, undefined);
+				if (surroundingName.startsWith(endOfFormula))
+					return endOfFormula;
 			}
 		}
-		return elements;
+
+		return undefined;
+	}
+
+	private static termFromName(termName: string, type: Type): Term {
+		if (Variable.variablePattern.test(termName)) 
+			return new Variable(termName, type);
+		else
+			return new Constant(termName, type);
 	}
 }

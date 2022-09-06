@@ -1,6 +1,5 @@
 the templates are:
-*a person* knows that *a fact*.
-*a merchant* ships *an item*.
+*a person* goes to *a person*
 
-the knowledge base Foo includes:
-fred knows that bob ships ships.
+the knowledge base Debug includes:
+chad goes to peru.
